@@ -201,10 +201,10 @@ export default function BenefitsPage() {
 
   const getColorClasses = (color: string) => {
     const colors: Record<string, { bg: string; text: string; icon: string }> = {
-      red: { bg: 'bg-red-100', text: 'text-red-700', icon: 'text-red-600' },
+      red: { bg: 'bg-destructive/10', text: 'text-destructive', icon: 'text-destructive' },
       blue: { bg: 'bg-accent', text: 'text-primary', icon: 'text-primary' },
-      violet: { bg: 'bg-violet-100', text: 'text-violet-700', icon: 'text-violet-600' },
-      emerald: { bg: 'bg-emerald-100', text: 'text-emerald-700', icon: 'text-emerald-600' },
+      violet: { bg: 'bg-accent', text: 'text-primary', icon: 'text-primary' },
+      emerald: { bg: 'bg-accent', text: 'text-primary', icon: 'text-primary' },
     }
     return colors[color] || colors.blue
   }

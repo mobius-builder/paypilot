@@ -183,10 +183,10 @@ const COMPLIANCE_ITEMS: ComplianceItem[] = [
 ]
 
 const STATUS_CONFIG = {
-  compliant: { color: 'bg-green-500', badge: 'bg-green-100 text-green-700', label: 'Compliant' },
-  pending: { color: 'bg-yellow-500', badge: 'bg-yellow-100 text-yellow-700', label: 'In Progress' },
-  overdue: { color: 'bg-red-500', badge: 'bg-red-100 text-red-700', label: 'Overdue' },
-  upcoming: { color: 'bg-blue-500', badge: 'bg-blue-100 text-blue-700', label: 'Upcoming' },
+  compliant: { color: 'bg-primary', badge: 'bg-accent text-primary', label: 'Compliant' },
+  pending: { color: 'bg-primary/60', badge: 'bg-accent text-primary', label: 'In Progress' },
+  overdue: { color: 'bg-destructive', badge: 'bg-destructive/10 text-destructive', label: 'Overdue' },
+  upcoming: { color: 'bg-primary/40', badge: 'bg-accent text-primary', label: 'Upcoming' },
 }
 
 const CATEGORY_CONFIG = {
@@ -198,10 +198,10 @@ const CATEGORY_CONFIG = {
 }
 
 const PRIORITY_CONFIG = {
-  low: 'bg-gray-100 text-gray-700',
-  medium: 'bg-blue-100 text-blue-700',
-  high: 'bg-orange-100 text-orange-700',
-  critical: 'bg-red-100 text-red-700',
+  low: 'bg-accent/50 text-muted-foreground',
+  medium: 'bg-accent text-primary',
+  high: 'bg-accent text-primary',
+  critical: 'bg-destructive/10 text-destructive',
 }
 
 export default function CompliancePage() {
@@ -353,7 +353,7 @@ export default function CompliancePage() {
                 <p className="text-sm text-muted-foreground">Overdue</p>
               </div>
               <div className="text-center p-3 bg-white/50 rounded-lg">
-                <p className="text-2xl font-bold text-blue-600">{stats.upcoming}</p>
+                <p className="text-2xl font-bold text-primary">{stats.upcoming}</p>
                 <p className="text-sm text-muted-foreground">Upcoming</p>
               </div>
             </div>
@@ -539,8 +539,8 @@ export default function CompliancePage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="hover:shadow-md transition-shadow cursor-pointer">
           <CardContent className="p-6 flex items-center gap-4">
-            <div className="p-3 rounded-lg bg-indigo-100">
-              <FileText className="h-6 w-6 text-indigo-600" />
+            <div className="p-3 rounded-lg bg-accent">
+              <FileText className="h-6 w-6 text-primary" />
             </div>
             <div>
               <h3 className="font-medium">Generate Report</h3>
@@ -552,8 +552,8 @@ export default function CompliancePage() {
         </Card>
         <Card className="hover:shadow-md transition-shadow cursor-pointer">
           <CardContent className="p-6 flex items-center gap-4">
-            <div className="p-3 rounded-lg bg-purple-100">
-              <Building2 className="h-6 w-6 text-purple-600" />
+            <div className="p-3 rounded-lg bg-accent">
+              <Building2 className="h-6 w-6 text-primary" />
             </div>
             <div>
               <h3 className="font-medium">Compliance Audit</h3>
