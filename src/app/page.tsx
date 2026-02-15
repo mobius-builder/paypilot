@@ -614,17 +614,62 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* CTA Section */}
+      {/* FAQ Section */}
       <section className="py-20 px-4">
+        <div className="max-w-3xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
+              Frequently asked questions
+            </h2>
+            <p className="text-xl text-slate-600">
+              Everything you need to know about PayPilot.
+            </p>
+          </div>
+          <div className="space-y-4">
+            {[
+              {
+                q: "How long does it take to get started?",
+                a: "Most companies are up and running in under 30 minutes. Our onboarding wizard guides you through importing employees, setting up payroll, and configuring benefits."
+              },
+              {
+                q: "Can I migrate from my current payroll provider?",
+                a: "Absolutely! We provide free data migration from Gusto, ADP, Paychex, and most major providers. Our team handles the heavy lifting so you don't have to."
+              },
+              {
+                q: "Is my data secure?",
+                a: "Yes. PayPilot uses bank-level encryption (AES-256), SOC 2 Type II certified infrastructure, and we never sell your data. We're fully GDPR and CCPA compliant."
+              },
+              {
+                q: "What if I need help?",
+                a: "Our support team is available via chat, email, and phone. Growth and Enterprise plans include dedicated account managers. Most questions are answered in under 2 hours."
+              },
+              {
+                q: "Can I try before I buy?",
+                a: "Yes! We offer a 14-day free trial with no credit card required. You'll have full access to all features so you can see exactly how PayPilot works for your team."
+              }
+            ].map((faq, i) => (
+              <Card key={i} className="border">
+                <CardContent className="p-6">
+                  <h3 className="font-semibold text-slate-900 mb-2">{faq.q}</h3>
+                  <p className="text-slate-600">{faq.a}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-20 px-4 bg-gradient-to-br from-blue-600 to-indigo-700">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-6">
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
             Ready to transform your HR?
           </h2>
-          <p className="text-xl text-slate-600 mb-8">
+          <p className="text-xl text-blue-100 mb-8">
             Join thousands of companies using PayPilot to simplify HR and payroll.
           </p>
           <Link href="/signup">
-            <Button size="lg" className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-lg px-8">
+            <Button size="lg" className="bg-white text-blue-700 hover:bg-blue-50 text-lg px-8 font-semibold">
               Start Your Free Trial
               <ChevronRight className="w-5 h-5 ml-2" />
             </Button>
