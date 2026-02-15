@@ -10,8 +10,8 @@
 import { createClient } from '@supabase/supabase-js'
 
 // Load from environment or use defaults
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://jmhklrepnarnrtltmhab.supabase.co'
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImptaGtscmVwbmFybnJ0bHRtaGFiIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MTEyNjk0NSwiZXhwIjoyMDg2NzAyOTQ1fQ.77lV_CRXzALLn6h1yoeVMmLNBZTO4tBweL5Ru2Wn6fQ'
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://xhtqwyibrhgmauygoebr.supabase.co'
+const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhodHF3eWlicmhnbWF1eWdvZWJyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MTExNDg4NCwiZXhwIjoyMDg2NjkwODg0fQ.0BPr9Mf_nsY4Fd--vkqsJTZya6pgCyB8iCQ-wRa3mqA'
 
 // Demo data constants - deterministic UUIDs for idempotency
 const DEMO_COMPANY_ID = '00000000-0000-0000-0000-000000000001'

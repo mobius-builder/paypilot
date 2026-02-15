@@ -1,12 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Skeleton } from '@/components/ui/skeleton'
 import {
   Table,
   TableBody,
@@ -46,15 +47,14 @@ import {
   Filter,
   MoreHorizontal,
   Mail,
-  Phone,
   Building2,
   Calendar,
-  DollarSign,
   Users,
   UserPlus,
   Download,
   Loader2,
-  CheckCircle2
+  CheckCircle2,
+  RefreshCw
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { exportEmployeesToCSV } from '@/lib/export-utils'
@@ -63,131 +63,22 @@ interface Employee {
   id: string
   name: string
   email: string
-  avatar: string
+  initials: string
   department: string
   jobTitle: string
   employmentType: string
-  startDate: string
-  salary: number
+  hireDate: string | null
+  salary: { amount: number; currency: string; frequency: string } | null
   status: string
-  manager: string
+  role: string
 }
 
-// Demo employee data - IDs match demo-data.ts for detail page
-const initialEmployees: Employee[] = [
-  {
-    id: 'e0000000-0000-0000-0000-000000000001',
-    name: 'Sarah Chen',
-    email: 'sarah.chen@acme.com',
-    avatar: 'SC',
-    department: 'Engineering',
-    jobTitle: 'Senior Software Engineer',
-    employmentType: 'full_time',
-    startDate: '2023-03-15',
-    salary: 145000,
-    status: 'active',
-    manager: 'John Doe'
-  },
-  {
-    id: 'e0000000-0000-0000-0000-000000000002',
-    name: 'Mike Johnson',
-    email: 'mike.johnson@acme.com',
-    avatar: 'MJ',
-    department: 'Engineering',
-    jobTitle: 'Software Engineer',
-    employmentType: 'full_time',
-    startDate: '2026-01-08',
-    salary: 95000,
-    status: 'onboarding',
-    manager: 'Sarah Chen'
-  },
-  {
-    id: 'e0000000-0000-0000-0000-000000000003',
-    name: 'Emily Davis',
-    email: 'emily.davis@acme.com',
-    avatar: 'ED',
-    department: 'Design',
-    jobTitle: 'Product Designer',
-    employmentType: 'full_time',
-    startDate: '2024-06-01',
-    salary: 110000,
-    status: 'active',
-    manager: 'John Doe'
-  },
-  {
-    id: 'e0000000-0000-0000-0000-000000000004',
-    name: 'Tom Wilson',
-    email: 'tom.wilson@acme.com',
-    avatar: 'TW',
-    department: 'Sales',
-    jobTitle: 'Account Executive',
-    employmentType: 'full_time',
-    startDate: '2024-09-15',
-    salary: 85000,
-    status: 'active',
-    manager: 'Lisa Park'
-  },
-  {
-    id: 'e0000000-0000-0000-0000-000000000005',
-    name: 'Lisa Park',
-    email: 'lisa.park@acme.com',
-    avatar: 'LP',
-    department: 'Sales',
-    jobTitle: 'Sales Manager',
-    employmentType: 'full_time',
-    startDate: '2022-11-01',
-    salary: 130000,
-    status: 'active',
-    manager: 'John Doe'
-  },
-  {
-    id: 'e0000000-0000-0000-0000-000000000006',
-    name: 'Alex Wong',
-    email: 'alex.wong@acme.com',
-    avatar: 'AW',
-    department: 'Marketing',
-    jobTitle: 'Marketing Specialist',
-    employmentType: 'full_time',
-    startDate: '2025-02-01',
-    salary: 75000,
-    status: 'active',
-    manager: 'John Doe'
-  },
-  {
-    id: 'e0000000-0000-0000-0000-000000000007',
-    name: 'Jordan Lee',
-    email: 'jordan.lee@acme.com',
-    avatar: 'JL',
-    department: 'Engineering',
-    jobTitle: 'DevOps Engineer',
-    employmentType: 'contractor',
-    startDate: '2025-06-01',
-    salary: 120000,
-    status: 'active',
-    manager: 'Sarah Chen'
-  },
-  {
-    id: 'e0000000-0000-0000-0000-000000000008',
-    name: 'Rachel Kim',
-    email: 'rachel.kim@acme.com',
-    avatar: 'RK',
-    department: 'HR',
-    jobTitle: 'HR Coordinator',
-    employmentType: 'full_time',
-    startDate: '2024-01-15',
-    salary: 65000,
-    status: 'on_leave',
-    manager: 'John Doe'
-  }
-]
-
-const departments = ['All', 'Engineering', 'Design', 'Sales', 'Marketing', 'HR', 'Finance']
+const departments = ['All', 'Engineering', 'Design', 'Sales', 'Marketing', 'Human Resources', 'Finance', 'Operations']
 const statuses = ['All', 'active', 'invited', 'onboarding', 'on_leave', 'terminated']
 
-const generateId = () => `e${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-
 export default function EmployeesPage() {
-  const [employees, setEmployees] = useState<Employee[]>(initialEmployees)
+  const [employees, setEmployees] = useState<Employee[]>([])
+  const [isLoading, setIsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [departmentFilter, setDepartmentFilter] = useState('All')
   const [statusFilter, setStatusFilter] = useState('All')
@@ -205,6 +96,29 @@ export default function EmployeesPage() {
     salary: '',
     employmentType: ''
   })
+
+  useEffect(() => {
+    fetchEmployees()
+  }, [])
+
+  const fetchEmployees = async () => {
+    setIsLoading(true)
+    try {
+      const response = await fetch('/api/employees')
+      if (response.ok) {
+        const data = await response.json()
+        setEmployees(data.employees || [])
+      } else {
+        console.error('Failed to fetch employees')
+        toast.error('Failed to load employees')
+      }
+    } catch (error) {
+      console.error('Error fetching employees:', error)
+      toast.error('Failed to load employees')
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   const resetForm = () => {
     setFormData({
@@ -228,32 +142,21 @@ export default function EmployeesPage() {
 
     setIsSubmitting(true)
 
-    // Simulate API call
+    // TODO: Implement actual API call to create employee
+    // For now, simulate API call
     await new Promise(resolve => setTimeout(resolve, 1500))
 
-    const newEmployee: Employee = {
-      id: generateId(),
-      name: `${formData.firstName} ${formData.lastName}`,
-      email: formData.email,
-      avatar: `${formData.firstName[0]}${formData.lastName[0]}`.toUpperCase(),
-      department: formData.department,
-      jobTitle: formData.jobTitle || 'Team Member',
-      employmentType: formData.employmentType || 'full_time',
-      startDate: formData.startDate || new Date().toISOString().split('T')[0],
-      salary: parseInt(formData.salary) || 50000,
-      status: 'invited',
-      manager: 'John Doe'
-    }
-
-    setEmployees(prev => [newEmployee, ...prev])
     setIsSubmitting(false)
     setAddDialogOpen(false)
     resetForm()
 
-    toast.success(`Invite sent to ${newEmployee.name}!`, {
-      description: `${newEmployee.email} will receive an onboarding email shortly.`,
+    toast.success(`Invite sent to ${formData.firstName} ${formData.lastName}!`, {
+      description: `${formData.email} will receive an onboarding email shortly.`,
       icon: <CheckCircle2 className="w-4 h-4 text-emerald-500" />
     })
+
+    // Refresh employee list
+    fetchEmployees()
   }
 
   const filteredEmployees = employees.filter(emp => {
@@ -283,7 +186,46 @@ export default function EmployeesPage() {
   }
 
   const formatEmploymentType = (type: string) => {
+    if (!type) return 'Full Time'
     return type.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
+  }
+
+  const formatSalary = (salary: Employee['salary']) => {
+    if (!salary) return '-'
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: salary.currency || 'USD',
+      maximumFractionDigits: 0
+    }).format(salary.amount)
+  }
+
+  // Loading skeleton
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <Skeleton className="h-8 w-40 mb-2" />
+            <Skeleton className="h-4 w-64" />
+          </div>
+          <Skeleton className="h-10 w-32" />
+        </div>
+        <div className="grid grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <Skeleton key={i} className="h-20 rounded-xl" />
+          ))}
+        </div>
+        <Card>
+          <CardContent className="p-6">
+            <div className="space-y-4">
+              {[...Array(5)].map((_, i) => (
+                <Skeleton key={i} className="h-16 w-full" />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
   return (
@@ -295,10 +237,25 @@ export default function EmployeesPage() {
           <p className="text-slate-600">Manage your team members and their information</p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" size="icon" onClick={fetchEmployees}>
+            <RefreshCw className="w-4 h-4" />
+          </Button>
           <Button
             variant="outline"
             onClick={() => {
-              exportEmployeesToCSV(employees)
+              const exportData = employees.map(e => ({
+                id: e.id,
+                name: e.name,
+                email: e.email,
+                department: e.department,
+                jobTitle: e.jobTitle,
+                employmentType: e.employmentType || 'full_time',
+                startDate: e.hireDate || '',
+                salary: e.salary?.amount || 0,
+                status: e.status,
+                manager: ''
+              }))
+              exportEmployeesToCSV(exportData)
               toast.success('Employees exported!', {
                 description: 'CSV file downloaded successfully'
               })
@@ -472,13 +429,13 @@ export default function EmployeesPage() {
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
-                <UserPlus className="w-5 h-5 text-emerald-600" />
+                <CheckCircle2 className="w-5 h-5 text-emerald-600" />
               </div>
               <div>
                 <p className="text-2xl font-bold text-slate-900">
-                  {employees.filter(e => e.status === 'onboarding' || e.status === 'invited').length}
+                  {employees.filter(e => e.status === 'active').length}
                 </p>
-                <p className="text-sm text-slate-500">New Hires</p>
+                <p className="text-sm text-slate-500">Active</p>
               </div>
             </div>
           </CardContent>
@@ -491,9 +448,15 @@ export default function EmployeesPage() {
               </div>
               <div>
                 <p className="text-2xl font-bold text-slate-900">
-                  {employees.filter(e => e.status === 'on_leave').length}
+                  {employees.filter(e => {
+                    if (!e.hireDate) return false
+                    const hireDate = new Date(e.hireDate)
+                    const thirtyDaysAgo = new Date()
+                    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+                    return hireDate >= thirtyDaysAgo
+                  }).length}
                 </p>
-                <p className="text-sm text-slate-500">On Leave</p>
+                <p className="text-sm text-slate-500">New Hires (30d)</p>
               </div>
             </div>
           </CardContent>
@@ -506,7 +469,7 @@ export default function EmployeesPage() {
               </div>
               <div>
                 <p className="text-2xl font-bold text-slate-900">
-                  {new Set(employees.map(e => e.department)).size}
+                  {new Set(employees.map(e => e.department).filter(Boolean)).size}
                 </p>
                 <p className="text-sm text-slate-500">Departments</p>
               </div>
@@ -530,7 +493,7 @@ export default function EmployeesPage() {
             </div>
             <div className="flex gap-2">
               <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
-                <SelectTrigger className="w-[150px]">
+                <SelectTrigger className="w-[180px]">
                   <Filter className="w-4 h-4 mr-2" />
                   <SelectValue placeholder="Department" />
                 </SelectTrigger>
@@ -570,12 +533,12 @@ export default function EmployeesPage() {
             </TableHeader>
             <TableBody>
               {filteredEmployees.map((employee) => (
-                <TableRow key={employee.id} className="hover:bg-slate-50 cursor-pointer" onClick={() => window.location.href = `/employees/${employee.id}`}>
+                <TableRow key={employee.id} className="hover:bg-slate-50 cursor-pointer">
                   <TableCell>
                     <Link href={`/employees/${employee.id}`} className="flex items-center gap-3">
                       <Avatar>
                         <AvatarFallback className="bg-accent text-primary">
-                          {employee.avatar}
+                          {employee.initials || employee.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
                       <div>
@@ -584,8 +547,8 @@ export default function EmployeesPage() {
                       </div>
                     </Link>
                   </TableCell>
-                  <TableCell>{employee.department}</TableCell>
-                  <TableCell>{employee.jobTitle}</TableCell>
+                  <TableCell>{employee.department || 'Unassigned'}</TableCell>
+                  <TableCell>{employee.jobTitle || 'Employee'}</TableCell>
                   <TableCell>
                     <Badge variant="secondary">
                       {formatEmploymentType(employee.employmentType)}
@@ -593,7 +556,7 @@ export default function EmployeesPage() {
                   </TableCell>
                   <TableCell>{getStatusBadge(employee.status)}</TableCell>
                   <TableCell className="text-right font-medium">
-                    ${employee.salary.toLocaleString()}
+                    {formatSalary(employee.salary)}
                   </TableCell>
                   <TableCell>
                     <DropdownMenu>
@@ -605,7 +568,9 @@ export default function EmployeesPage() {
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem>View Profile</DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href={`/employees/${employee.id}`}>View Profile</Link>
+                        </DropdownMenuItem>
                         <DropdownMenuItem>Edit Details</DropdownMenuItem>
                         <DropdownMenuItem>
                           <Mail className="w-4 h-4 mr-2" />
@@ -625,7 +590,11 @@ export default function EmployeesPage() {
           {filteredEmployees.length === 0 && (
             <div className="text-center py-12">
               <Users className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-              <p className="text-slate-600">No employees found matching your criteria</p>
+              <p className="text-slate-600">
+                {employees.length === 0
+                  ? 'No employees found. Add your first team member!'
+                  : 'No employees found matching your criteria'}
+              </p>
             </div>
           )}
         </CardContent>
