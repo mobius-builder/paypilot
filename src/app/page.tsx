@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -18,6 +18,62 @@ import {
   TrendingDown,
   DollarSign
 } from "lucide-react"
+
+// Animated counter component
+function AnimatedCounter({ value, suffix = '' }: { value: string; suffix?: string }) {
+  const [count, setCount] = useState(0)
+  const [isVisible, setIsVisible] = useState(false)
+  const ref = useRef<HTMLSpanElement>(null)
+
+  // Extract numeric value
+  const numericValue = parseInt(value.replace(/[^0-9]/g, '')) || 0
+  const prefix = value.match(/^[^0-9]*/)?.[0] || ''
+  const valueSuffix = value.match(/[^0-9]*$/)?.[0] || ''
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !isVisible) {
+          setIsVisible(true)
+        }
+      },
+      { threshold: 0.1 }
+    )
+
+    if (ref.current) {
+      observer.observe(ref.current)
+    }
+
+    return () => observer.disconnect()
+  }, [isVisible])
+
+  useEffect(() => {
+    if (!isVisible) return
+
+    const duration = 1500
+    const steps = 60
+    const increment = numericValue / steps
+    let current = 0
+
+    const timer = setInterval(() => {
+      current += increment
+      if (current >= numericValue) {
+        setCount(numericValue)
+        clearInterval(timer)
+      } else {
+        setCount(Math.floor(current))
+      }
+    }, duration / steps)
+
+    return () => clearInterval(timer)
+  }, [isVisible, numericValue])
+
+  return (
+    <span ref={ref}>
+      {prefix}{count.toLocaleString()}{valueSuffix}{suffix}
+    </span>
+  )
+}
 
 const features = [
   {
@@ -323,14 +379,14 @@ export default function LandingPage() {
           {/* Stats Bar */}
           <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto">
             {[
-              { value: '10K+', label: 'Employees Managed' },
-              { value: '500+', label: 'Companies' },
-              { value: '99.9%', label: 'Uptime' },
-              { value: '4.9/5', label: 'Customer Rating' },
+              { value: '10000', label: 'Employees Managed', suffix: '+' },
+              { value: '500', label: 'Companies', suffix: '+' },
+              { value: '99', label: 'Uptime', suffix: '.9%' },
+              { value: '4', label: 'Customer Rating', suffix: '.9/5' },
             ].map((stat) => (
               <div key={stat.label} className="text-center">
                 <p className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 text-transparent bg-clip-text">
-                  {stat.value}
+                  <AnimatedCounter value={stat.value} suffix={stat.suffix} />
                 </p>
                 <p className="text-sm text-slate-500 mt-1">{stat.label}</p>
               </div>
