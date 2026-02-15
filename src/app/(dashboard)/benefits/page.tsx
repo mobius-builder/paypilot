@@ -403,7 +403,69 @@ export default function BenefitsPage() {
                   <p className="font-medium text-slate-900">{doc.name}</p>
                   <p className="text-xs text-slate-500">{doc.type} • {doc.size}</p>
                 </div>
-                <Button variant="ghost" size="sm">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    // Generate document content
+                    let content = `${doc.name}\n`
+                    content += `${'='.repeat(50)}\n\n`
+                    content += `Document Type: ${doc.type}\n`
+                    content += `Generated: ${new Date().toLocaleString()}\n\n`
+
+                    if (doc.name.includes('Benefits Summary')) {
+                      content += `BENEFITS SUMMARY 2026\n\n`
+                      content += `Health Insurance: Blue Cross Blue Shield\n`
+                      content += `  - Coverage: Family\n`
+                      content += `  - Monthly Premium: $350 (employee) + $450 (employer)\n\n`
+                      content += `Dental: Delta Dental Plus\n`
+                      content += `  - Coverage: Individual + Spouse\n`
+                      content += `  - Monthly Premium: $45 (employee) + $55 (employer)\n\n`
+                      content += `Vision: VSP Vision Care\n`
+                      content += `  - Coverage: Family\n`
+                      content += `  - Monthly Premium: $15 (employee) + $20 (employer)\n\n`
+                      content += `401(k): Fidelity Investments\n`
+                      content += `  - Employee Contribution: 6%\n`
+                      content += `  - Employer Match: 4%\n`
+                    } else if (doc.name.includes('Health Plan')) {
+                      content += `HEALTH PLAN DETAILS\n\n`
+                      content += `Provider: Blue Cross Blue Shield\n`
+                      content += `Plan Type: PPO\n\n`
+                      content += `In-Network Benefits:\n`
+                      content += `  - Annual Deductible: $500 individual / $1,000 family\n`
+                      content += `  - Primary Care Visit: $25 copay\n`
+                      content += `  - Specialist Visit: $40 copay\n`
+                      content += `  - Emergency Room: $150 copay\n`
+                      content += `  - Generic Rx: $10 copay\n`
+                    } else if (doc.name.includes('401(k)')) {
+                      content += `401(k) ENROLLMENT GUIDE\n\n`
+                      content += `Provider: Fidelity Investments\n\n`
+                      content += `Contribution Limits (2026):\n`
+                      content += `  - Employee: $23,000\n`
+                      content += `  - Catch-up (50+): $7,500 additional\n\n`
+                      content += `Employer Match:\n`
+                      content += `  - 100% match on first 4% of salary\n`
+                      content += `  - Vesting: Immediate\n`
+                    } else {
+                      content += `FSA INFORMATION\n\n`
+                      content += `Annual Contribution Limit: $3,050\n`
+                      content += `Grace Period: 2.5 months\n`
+                      content += `Rollover: Up to $610\n`
+                    }
+
+                    const blob = new Blob([content], { type: 'text/plain' })
+                    const url = URL.createObjectURL(blob)
+                    const link = document.createElement('a')
+                    link.href = url
+                    link.download = `${doc.name.replace(/\s+/g, '_')}.txt`
+                    document.body.appendChild(link)
+                    link.click()
+                    document.body.removeChild(link)
+                    URL.revokeObjectURL(url)
+
+                    toast.success(`Downloaded ${doc.name}`)
+                  }}
+                >
                   <Download className="w-4 h-4" />
                 </Button>
               </div>

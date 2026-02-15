@@ -57,6 +57,7 @@ import {
   CheckCircle2
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { exportEmployeesToCSV } from '@/lib/export-utils'
 
 interface Employee {
   id: string
@@ -294,9 +295,17 @@ export default function EmployeesPage() {
           <p className="text-slate-600">Manage your team members and their information</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline">
+          <Button
+            variant="outline"
+            onClick={() => {
+              exportEmployeesToCSV(employees)
+              toast.success('Employees exported!', {
+                description: 'CSV file downloaded successfully'
+              })
+            }}
+          >
             <Download className="w-4 h-4 mr-2" />
-            Export
+            Export CSV
           </Button>
           <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
             <DialogTrigger asChild>

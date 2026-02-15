@@ -41,6 +41,7 @@ import {
   CheckCircle2
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { generateReport, exportAllData } from '@/lib/export-utils'
 
 // Demo analytics data
 const kpiCards = [
@@ -142,7 +143,18 @@ export default function ReportsPage() {
     }
 
     setIsGenerating(true)
-    await new Promise(resolve => setTimeout(resolve, 2000))
+    await new Promise(resolve => setTimeout(resolve, 1500))
+
+    // Generate and download the report file
+    const filename = generateReport(reportType, reportPeriod, {
+      totalGross: 249700,
+      totalTaxes: 62425,
+      totalDeductions: 37455,
+      totalNet: 149820,
+      employeeCount: 47,
+      payPeriods: 2,
+      totalEmployees: 47,
+    })
 
     const today = new Date()
     const newReport = {
@@ -156,14 +168,27 @@ export default function ReportsPage() {
     setGenerateDialogOpen(false)
     setReportType('')
     setReportPeriod('')
-    toast.success('Report generated!', {
-      description: `${newReport.name} is ready to download`
+    toast.success('Report generated & downloaded!', {
+      description: `${filename} saved to your downloads`
     })
   }
 
   const handleDownload = (reportName: string) => {
-    toast.success(`Downloading ${reportName}`, {
-      description: 'Your report will download shortly'
+    // Extract report type from name
+    const parts = reportName.split(' Report')
+    const type = parts[0] || 'General'
+    const period = parts[1]?.replace(' - ', '') || 'Current'
+
+    generateReport(type, period, {
+      totalGross: 249700,
+      totalTaxes: 62425,
+      totalDeductions: 37455,
+      totalNet: 149820,
+      employeeCount: 47,
+    })
+
+    toast.success(`Downloaded ${reportName}`, {
+      description: 'Report saved to your downloads folder'
     })
   }
 
@@ -190,7 +215,15 @@ export default function ReportsPage() {
               <SelectItem value="all">All Time</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline">
+          <Button
+            variant="outline"
+            onClick={() => {
+              exportAllData()
+              toast.success('Data exported!', {
+                description: 'All analytics data downloaded'
+              })
+            }}
+          >
             <Download className="w-4 h-4 mr-2" />
             Export All
           </Button>

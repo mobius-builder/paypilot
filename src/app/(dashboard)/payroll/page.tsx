@@ -38,6 +38,7 @@ import {
   Loader2
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { exportPayrollToCSV, generateReport } from '@/lib/export-utils'
 import Link from 'next/link'
 import { canTransitionPayroll, type PayrollStatus } from '@/lib/state-machines'
 
@@ -285,9 +286,25 @@ export default function PayrollPage() {
           <p className="text-slate-600">Manage payroll runs and view payment history</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline">
+          <Button
+            variant="outline"
+            onClick={() => {
+              const payrollData = currentPayrollEmployees.map(emp => ({
+                employeeName: emp.name,
+                grossPay: emp.grossPay,
+                taxes: emp.taxes,
+                deductions: emp.deductions,
+                netPay: emp.netPay,
+                payDate: 'Feb 20, 2026',
+              }))
+              exportPayrollToCSV(payrollData)
+              toast.success('Payroll exported!', {
+                description: 'CSV file downloaded successfully'
+              })
+            }}
+          >
             <Download className="w-4 h-4 mr-2" />
-            Export Reports
+            Export CSV
           </Button>
           <Link href="/payroll/run">
             <Button className="bg-primary hover:bg-primary/90">
@@ -453,10 +470,25 @@ export default function PayrollPage() {
                       <TableCell>{getStatusBadge(run.status)}</TableCell>
                       <TableCell>
                         <div className="flex gap-1">
-                          <Button variant="ghost" size="sm">
+                          <Button variant="ghost" size="sm" title="View Details">
                             <FileText className="w-4 h-4" />
                           </Button>
-                          <Button variant="ghost" size="sm">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            title="Download Report"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              generateReport('Payroll Summary', run.payPeriod, {
+                                totalGross: run.grossPay,
+                                totalTaxes: run.taxes,
+                                totalDeductions: run.deductions,
+                                totalNet: run.netPay,
+                                employeeCount: run.employees,
+                              })
+                              toast.success('Report downloaded!')
+                            }}
+                          >
                             <Download className="w-4 h-4" />
                           </Button>
                         </div>
@@ -647,9 +679,56 @@ export default function PayrollPage() {
             <Button variant="outline" onClick={() => setPayStubDialogOpen(false)}>
               Close
             </Button>
-            <Button>
+            <Button
+              onClick={() => {
+                if (selectedEmployee) {
+                  // Generate pay stub content
+                  let content = `PAY STUB\n`
+                  content += `${'='.repeat(50)}\n\n`
+                  content += `Employee: ${selectedEmployee.name}\n`
+                  content += `Department: ${selectedEmployee.department}\n`
+                  content += `Pay Period: Feb 2-15, 2026\n`
+                  content += `Pay Date: Feb 20, 2026\n\n`
+                  content += `${'='.repeat(50)}\n\n`
+                  content += `EARNINGS\n`
+                  content += `-`.repeat(30) + `\n`
+                  content += `Regular Hours: ${selectedEmployee.regularHours}\n`
+                  content += `Overtime Hours: ${selectedEmployee.overtimeHours}\n`
+                  content += `Gross Pay: $${selectedEmployee.grossPay.toLocaleString()}\n\n`
+                  content += `TAXES\n`
+                  content += `-`.repeat(30) + `\n`
+                  content += `Federal Tax: -$${Math.round(selectedEmployee.taxes * 0.6).toLocaleString()}\n`
+                  content += `State Tax: -$${Math.round(selectedEmployee.taxes * 0.25).toLocaleString()}\n`
+                  content += `Social Security/Medicare: -$${Math.round(selectedEmployee.taxes * 0.15).toLocaleString()}\n`
+                  content += `Total Taxes: -$${selectedEmployee.taxes.toLocaleString()}\n\n`
+                  content += `DEDUCTIONS\n`
+                  content += `-`.repeat(30) + `\n`
+                  content += `Health Insurance: -$${Math.round(selectedEmployee.deductions * 0.7).toLocaleString()}\n`
+                  content += `401(k): -$${Math.round(selectedEmployee.deductions * 0.2).toLocaleString()}\n`
+                  content += `Other: -$${Math.round(selectedEmployee.deductions * 0.1).toLocaleString()}\n`
+                  content += `Total Deductions: -$${selectedEmployee.deductions.toLocaleString()}\n\n`
+                  content += `${'='.repeat(50)}\n`
+                  content += `NET PAY: $${selectedEmployee.netPay.toLocaleString()}\n`
+                  content += `${'='.repeat(50)}\n`
+
+                  const blob = new Blob([content], { type: 'text/plain' })
+                  const url = URL.createObjectURL(blob)
+                  const link = document.createElement('a')
+                  link.href = url
+                  link.download = `paystub_${selectedEmployee.name.replace(/\s+/g, '_')}_Feb2026.txt`
+                  document.body.appendChild(link)
+                  link.click()
+                  document.body.removeChild(link)
+                  URL.revokeObjectURL(url)
+
+                  toast.success('Pay stub downloaded!', {
+                    description: `Pay stub for ${selectedEmployee.name} saved`
+                  })
+                }
+              }}
+            >
               <Download className="w-4 h-4 mr-2" />
-              Download PDF
+              Download Pay Stub
             </Button>
           </DialogFooter>
         </DialogContent>
