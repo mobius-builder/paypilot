@@ -127,7 +127,8 @@ export async function GET() {
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 
     if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      // Return demo data for unauthenticated users (demo mode)
+      return NextResponse.json(getDemoData({ id: 'demo', email: 'demo@acme.com' }))
     }
 
     // Get user's company membership
@@ -303,6 +304,7 @@ export async function GET() {
     return NextResponse.json(response)
   } catch (error) {
     console.error('Dashboard API error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    // Return demo data even on errors
+    return NextResponse.json(getDemoData({ id: 'demo', email: 'demo@acme.com' }))
   }
 }

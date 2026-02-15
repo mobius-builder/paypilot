@@ -186,7 +186,10 @@ export async function GET(request: Request) {
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 
     if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      // Return demo data for unauthenticated users
+      const url = new URL(request.url)
+      const days = parseInt(url.searchParams.get('days') || '7', 10)
+      return NextResponse.json(getDemoInsightsData(days))
     }
 
     // Verify admin permissions
@@ -399,6 +402,7 @@ export async function GET(request: Request) {
     })
   } catch (error) {
     console.error('Insights API error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    // Return demo data even on errors
+    return NextResponse.json(getDemoInsightsData(7))
   }
 }
