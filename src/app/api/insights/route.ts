@@ -1,175 +1,97 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { isDemoMode } from '@/lib/api-auth'
+import {
+  STATIC_CONVERSATIONS,
+  STATIC_AGENT_INSTANCES,
+  getAgentAnalytics,
+} from '@/lib/static-demo-data'
 
-// Rich demo data for the insights dashboard
+// Generate insights data from static demo conversations
 function getDemoInsightsData(days: number) {
   const now = new Date()
+  const analytics = getAgentAnalytics()
+
+  // Build feed from conversations with summaries
+  const feed = STATIC_CONVERSATIONS
+    .filter(conv => conv.summary) // Only conversations with summaries
+    .slice(0, 15) // Top 15 most recent
+    .map((conv, index) => {
+      const agentInstance = STATIC_AGENT_INSTANCES.find(a => a.id === conv.agentInstanceId)
+      // Extract a key quote from the last employee message
+      const employeeMessages = conv.messages.filter(m => m.senderType === 'employee')
+      const lastEmployeeMsg = employeeMessages[employeeMessages.length - 1]
+
+      return {
+        id: `fb-${conv.id}`,
+        conversation_id: conv.id,
+        summary: generateSummaryText(conv),
+        sentiment: conv.summary.sentiment,
+        tags: conv.summary.tags,
+        computed_at: new Date(now.getTime() - (index * 3 + 1) * 60 * 60 * 1000).toISOString(),
+        participant: { name: conv.employeeName, avatar_url: null },
+        agent_name: agentInstance?.name || 'AI Agent',
+        key_quotes: lastEmployeeMsg ? [lastEmployeeMsg.content.substring(0, 100)] : [],
+        delta_notes: conv.summary.riskLevel === 'high' ? 'Requires immediate attention' :
+                     conv.summary.riskLevel === 'moderate' ? 'Monitor closely' : null,
+      }
+    })
+
+  // Build action items from conversation summaries
+  const actionItems = STATIC_CONVERSATIONS
+    .filter(conv => conv.summary.actionItems.length > 0)
+    .flatMap(conv =>
+      conv.summary.actionItems.map((item, idx) => ({
+        text: item,
+        confidence: 0.95 - (idx * 0.05),
+        priority: conv.summary.riskLevel === 'high' ? 'high' :
+                  conv.summary.riskLevel === 'moderate' ? 'medium' : 'low',
+        conversation_id: conv.id,
+        participant_name: conv.employeeName,
+      }))
+    )
+    .slice(0, 10)
+
+  // Build tag counts from all conversations
+  const tagCounts: Record<string, number> = {}
+  for (const conv of STATIC_CONVERSATIONS) {
+    for (const tag of conv.summary.tags) {
+      tagCounts[tag] = (tagCounts[tag] || 0) + 1
+    }
+  }
+  const topTags = Object.entries(tagCounts)
+    .map(([tag, count]) => ({ tag, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 10)
+
+  // Find escalations
+  const escalations = STATIC_CONVERSATIONS
+    .filter(conv => conv.status === 'escalated' || conv.summary.riskLevel === 'high')
+    .map(conv => ({
+      id: `esc-${conv.id}`,
+      escalation_type: 'safety',
+      severity: 'high',
+      status: 'open',
+      created_at: conv.lastMessageAt,
+      participant_name: conv.employeeName,
+    }))
 
   return {
-    feed: [
-      {
-        id: 'fb-001',
-        conversation_id: 'conv-001',
-        summary: 'Employee expressed enthusiasm about the new project direction and appreciated the recent team restructuring. They feel more aligned with company goals.',
-        sentiment: 'positive',
-        tags: ['culture', 'growth', 'team_dynamics'],
-        computed_at: new Date(now.getTime() - 2 * 60 * 60 * 1000).toISOString(),
-        participant: { name: 'Sarah Chen', avatar_url: null },
-        agent_name: 'Pulse Check Agent',
-        key_quotes: ['I really appreciate how transparent leadership has been lately'],
-        delta_notes: 'Sentiment improved from neutral last week',
-      },
-      {
-        id: 'fb-002',
-        conversation_id: 'conv-002',
-        summary: 'Discussed workload concerns but overall positive outlook. Looking forward to new tooling rollout next month.',
-        sentiment: 'neutral',
-        tags: ['workload', 'tooling'],
-        computed_at: new Date(now.getTime() - 5 * 60 * 60 * 1000).toISOString(),
-        participant: { name: 'Marcus Johnson', avatar_url: null },
-        agent_name: 'Weekly Check-in',
-        key_quotes: ['Things are busy but manageable'],
-        delta_notes: null,
-      },
-      {
-        id: 'fb-003',
-        conversation_id: 'conv-003',
-        summary: 'Very positive feedback about manager relationship and career development opportunities. Feels supported in pursuing new skills.',
-        sentiment: 'positive',
-        tags: ['manager', 'growth', 'recognition'],
-        computed_at: new Date(now.getTime() - 8 * 60 * 60 * 1000).toISOString(),
-        participant: { name: 'Emily Rodriguez', avatar_url: null },
-        agent_name: 'Pulse Check Agent',
-        key_quotes: ['My manager has been incredibly supportive of my growth'],
-        delta_notes: null,
-      },
-      {
-        id: 'fb-004',
-        conversation_id: 'conv-004',
-        summary: 'Shared excitement about upcoming team offsite. Mentioned some concerns about communication across departments.',
-        sentiment: 'mixed',
-        tags: ['communication', 'team_dynamics', 'culture'],
-        computed_at: new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString(),
-        participant: { name: 'David Kim', avatar_url: null },
-        agent_name: 'Weekly Check-in',
-        key_quotes: ['Looking forward to the offsite, hoping we can improve cross-team sync'],
-        delta_notes: null,
-      },
-      {
-        id: 'fb-005',
-        conversation_id: 'conv-005',
-        summary: 'Positive feedback on work-life balance improvements. Appreciates the flexible schedule policy.',
-        sentiment: 'positive',
-        tags: ['work_life_balance', 'culture'],
-        computed_at: new Date(now.getTime() - 36 * 60 * 60 * 1000).toISOString(),
-        participant: { name: 'Lisa Park', avatar_url: null },
-        agent_name: 'Pulse Check Agent',
-        key_quotes: ['The flexible hours have made such a difference for my family'],
-        delta_notes: 'New positive signal about work-life balance',
-      },
-      {
-        id: 'fb-006',
-        conversation_id: 'conv-006',
-        summary: 'Discussed career aspirations and interest in moving to a leadership role. Feels ready for more responsibility.',
-        sentiment: 'positive',
-        tags: ['growth', 'manager'],
-        computed_at: new Date(now.getTime() - 48 * 60 * 60 * 1000).toISOString(),
-        participant: { name: 'James Wilson', avatar_url: null },
-        agent_name: 'Career Development Agent',
-        key_quotes: ['I feel ready to take on more leadership opportunities'],
-        delta_notes: null,
-      },
-      {
-        id: 'fb-007',
-        conversation_id: 'conv-007',
-        summary: 'Expressed some frustration with current project timeline but remains committed to team goals.',
-        sentiment: 'neutral',
-        tags: ['workload', 'team_dynamics'],
-        computed_at: new Date(now.getTime() - 72 * 60 * 60 * 1000).toISOString(),
-        participant: { name: 'Rachel Wong', avatar_url: null },
-        agent_name: 'Weekly Check-in',
-        key_quotes: ['The timeline is tight but we will make it work'],
-        delta_notes: null,
-      },
-      {
-        id: 'fb-008',
-        conversation_id: 'conv-008',
-        summary: 'Very positive about recent compensation review. Feels valued and fairly compensated for their contributions.',
-        sentiment: 'positive',
-        tags: ['compensation', 'recognition'],
-        computed_at: new Date(now.getTime() - 96 * 60 * 60 * 1000).toISOString(),
-        participant: { name: 'Alex Thompson', avatar_url: null },
-        agent_name: 'Pulse Check Agent',
-        key_quotes: ['I feel truly valued here, the raise was unexpected and appreciated'],
-        delta_notes: null,
-      },
-    ],
-    sentiment_distribution: {
-      positive: 18,
-      neutral: 8,
-      negative: 2,
-      mixed: 4,
-    },
-    top_tags: [
-      { tag: 'culture', count: 12 },
-      { tag: 'growth', count: 10 },
-      { tag: 'work_life_balance', count: 8 },
-      { tag: 'manager', count: 7 },
-      { tag: 'team_dynamics', count: 6 },
-      { tag: 'workload', count: 5 },
-      { tag: 'communication', count: 4 },
-      { tag: 'compensation', count: 3 },
-      { tag: 'recognition', count: 3 },
-      { tag: 'tooling', count: 2 },
-    ],
-    action_items: [
-      {
-        text: 'Schedule 1:1 with David Kim to discuss cross-team communication concerns',
-        confidence: 0.92,
-        priority: 'high',
-        conversation_id: 'conv-004',
-        participant_name: 'David Kim',
-      },
-      {
-        text: 'Consider James Wilson for upcoming team lead position',
-        confidence: 0.88,
-        priority: 'medium',
-        conversation_id: 'conv-006',
-        participant_name: 'James Wilson',
-      },
-      {
-        text: 'Review project timeline with Rachel Wong\'s team',
-        confidence: 0.85,
-        priority: 'medium',
-        conversation_id: 'conv-007',
-        participant_name: 'Rachel Wong',
-      },
-      {
-        text: 'Share positive feedback about flexible schedule policy with leadership',
-        confidence: 0.78,
-        priority: 'low',
-        conversation_id: 'conv-005',
-        participant_name: 'Lisa Park',
-      },
-      {
-        text: 'Plan team recognition event to maintain positive momentum',
-        confidence: 0.75,
-        priority: 'low',
-        conversation_id: 'conv-001',
-        participant_name: 'Sarah Chen',
-      },
-    ],
-    escalations: [],
+    feed,
+    sentiment_distribution: analytics.sentimentDistribution,
+    top_tags: topTags,
+    action_items: actionItems,
+    escalations,
     delta_highlights: {
-      improved: ['Overall sentiment up 12% from last week', 'Work-life balance feedback significantly improved'],
-      declined: [],
-      new_concerns: ['Cross-team communication emerging as new topic'],
+      improved: analytics.sentimentDistribution.positive > 15 ? ['Overall sentiment trending positive'] : [],
+      declined: analytics.sentimentDistribution.negative > 5 ? ['Some negative sentiment detected'] : [],
+      new_concerns: analytics.riskDistribution.high > 0 ? ['High-risk conversation requires attention'] : [],
     },
     stats: {
-      active_conversations: 34,
-      messages_this_period: 156,
-      summaries_count: 32,
-      open_escalations: 0,
+      active_conversations: analytics.activeConversations,
+      messages_this_period: STATIC_CONVERSATIONS.reduce((sum, c) => sum + c.messages.length, 0),
+      summaries_count: analytics.totalConversations,
+      open_escalations: analytics.escalatedConversations,
     },
     period: {
       days,
@@ -178,17 +100,39 @@ function getDemoInsightsData(days: number) {
   }
 }
 
+// Generate a human-readable summary from conversation data
+function generateSummaryText(conv: typeof STATIC_CONVERSATIONS[0]): string {
+  const sentiment = conv.summary.sentiment
+  const tags = conv.summary.tags.slice(0, 2).join(' and ')
+
+  if (sentiment === 'positive') {
+    return `${conv.employeeName} shared positive feedback about ${tags}. Employee appears engaged and satisfied with their current situation.`
+  } else if (sentiment === 'negative') {
+    return `${conv.employeeName} expressed concerns about ${tags}. This conversation may require follow-up attention.`
+  } else if (sentiment === 'mixed') {
+    return `${conv.employeeName} had mixed feelings about ${tags}. Some positive aspects noted alongside areas of concern.`
+  } else {
+    return `${conv.employeeName} discussed ${tags} in a balanced manner. No immediate concerns identified.`
+  }
+}
+
 // GET /api/insights - Get insights dashboard data
 export async function GET(request: Request) {
   try {
+    const url = new URL(request.url)
+    const days = parseInt(url.searchParams.get('days') || '7', 10)
+
+    // Demo mode: return static data from conversations
+    if (await isDemoMode()) {
+      return NextResponse.json(getDemoInsightsData(days))
+    }
+
     const supabase = await createClient()
 
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 
     if (authError || !user) {
       // Return demo data for unauthenticated users
-      const url = new URL(request.url)
-      const days = parseInt(url.searchParams.get('days') || '7', 10)
       return NextResponse.json(getDemoInsightsData(days))
     }
 
@@ -201,8 +145,6 @@ export async function GET(request: Request) {
 
     if (!membership) {
       // Return demo data if no membership found
-      const url = new URL(request.url)
-      const days = parseInt(url.searchParams.get('days') || '7', 10)
       return NextResponse.json(getDemoInsightsData(days))
     }
 
@@ -210,8 +152,6 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
     }
 
-    const url = new URL(request.url)
-    const days = parseInt(url.searchParams.get('days') || '7', 10)
     const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString()
 
     // Get recent summaries with participant info
