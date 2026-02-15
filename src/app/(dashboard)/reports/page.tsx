@@ -13,6 +13,15 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Label } from '@/components/ui/label'
+import {
   BarChart3,
   TrendingUp,
   TrendingDown,
@@ -26,8 +35,12 @@ import {
   PieChart,
   LineChart,
   Target,
-  Briefcase
+  Briefcase,
+  Loader2,
+  FileText,
+  CheckCircle2
 } from 'lucide-react'
+import { toast } from 'sonner'
 
 // Demo analytics data
 const kpiCards = [
@@ -116,6 +129,43 @@ const recentReports = [
 
 export default function ReportsPage() {
   const [timeRange, setTimeRange] = useState('quarter')
+  const [generateDialogOpen, setGenerateDialogOpen] = useState(false)
+  const [reportType, setReportType] = useState('')
+  const [reportPeriod, setReportPeriod] = useState('')
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [reports, setReports] = useState(recentReports)
+
+  const handleGenerateReport = async () => {
+    if (!reportType || !reportPeriod) {
+      toast.error('Please select report type and period')
+      return
+    }
+
+    setIsGenerating(true)
+    await new Promise(resolve => setTimeout(resolve, 2000))
+
+    const today = new Date()
+    const newReport = {
+      name: `${reportType} Report - ${reportPeriod}`,
+      date: today.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      type: reportType.split(' ')[0]
+    }
+
+    setReports(prev => [newReport, ...prev])
+    setIsGenerating(false)
+    setGenerateDialogOpen(false)
+    setReportType('')
+    setReportPeriod('')
+    toast.success('Report generated!', {
+      description: `${newReport.name} is ready to download`
+    })
+  }
+
+  const handleDownload = (reportName: string) => {
+    toast.success(`Downloading ${reportName}`, {
+      description: 'Your report will download shortly'
+    })
+  }
 
   const maxPayroll = Math.max(...monthlyPayroll.map(m => m.amount))
 
@@ -361,7 +411,7 @@ export default function ReportsPage() {
               </CardTitle>
               <CardDescription>Download and view generated reports</CardDescription>
             </div>
-            <Button>
+            <Button onClick={() => setGenerateDialogOpen(true)}>
               <BarChart3 className="w-4 h-4 mr-2" />
               Generate Report
             </Button>
@@ -369,9 +419,9 @@ export default function ReportsPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
-            {recentReports.map((report) => (
+            {reports.map((report, idx) => (
               <div
-                key={report.name}
+                key={`${report.name}-${idx}`}
                 className="flex items-center justify-between p-4 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors"
               >
                 <div className="flex items-center gap-4">
@@ -385,7 +435,7 @@ export default function ReportsPage() {
                 </div>
                 <div className="flex items-center gap-3">
                   <Badge variant="secondary">{report.type}</Badge>
-                  <Button variant="ghost" size="sm">
+                  <Button variant="ghost" size="sm" onClick={() => handleDownload(report.name)}>
                     <Download className="w-4 h-4" />
                   </Button>
                 </div>
@@ -394,6 +444,78 @@ export default function ReportsPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Generate Report Dialog */}
+      <Dialog open={generateDialogOpen} onOpenChange={setGenerateDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Generate Report</DialogTitle>
+            <DialogDescription>
+              Create a new report for your records
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <Label>Report Type</Label>
+              <Select value={reportType} onValueChange={setReportType} disabled={isGenerating}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select report type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Payroll Summary">Payroll Summary</SelectItem>
+                  <SelectItem value="Compensation Analysis">Compensation Analysis</SelectItem>
+                  <SelectItem value="Headcount Report">Headcount Report</SelectItem>
+                  <SelectItem value="PTO Utilization">PTO Utilization</SelectItem>
+                  <SelectItem value="Benefits Enrollment">Benefits Enrollment</SelectItem>
+                  <SelectItem value="Turnover Analysis">Turnover Analysis</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Time Period</Label>
+              <Select value={reportPeriod} onValueChange={setReportPeriod} disabled={isGenerating}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select period" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Q1 2026">Q1 2026</SelectItem>
+                  <SelectItem value="Q4 2025">Q4 2025</SelectItem>
+                  <SelectItem value="Full Year 2025">Full Year 2025</SelectItem>
+                  <SelectItem value="January 2026">January 2026</SelectItem>
+                  <SelectItem value="February 2026">February 2026</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {reportType && reportPeriod && (
+              <div className="bg-blue-50 p-3 rounded-lg flex items-center gap-3">
+                <FileText className="w-5 h-5 text-blue-600" />
+                <div>
+                  <p className="text-sm font-medium text-blue-800">{reportType} Report</p>
+                  <p className="text-xs text-blue-600">Period: {reportPeriod}</p>
+                </div>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setGenerateDialogOpen(false)} disabled={isGenerating}>
+              Cancel
+            </Button>
+            <Button onClick={handleGenerateReport} disabled={isGenerating}>
+              {isGenerating ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 className="w-4 h-4 mr-2" />
+                  Generate
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
