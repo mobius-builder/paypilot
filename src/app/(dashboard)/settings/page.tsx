@@ -413,7 +413,7 @@ export default function SettingsPage() {
               </CardHeader>
               <CardContent>
                 <div className="flex items-center gap-4 p-4 border rounded-lg">
-                  <div className="w-12 h-8 bg-slate-800 rounded flex items-center justify-center">
+                  <div className="w-12 h-8 bg-foreground/90 rounded flex items-center justify-center">
                     <CreditCard className="w-6 h-6 text-white" />
                   </div>
                   <div className="flex-1">

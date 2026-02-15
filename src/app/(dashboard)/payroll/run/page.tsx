@@ -98,8 +98,8 @@ export default function RunPayrollPage() {
           Back
         </Button>
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Run Payroll</h1>
-          <p className="text-slate-600">Create a new payroll run for your team</p>
+          <h1 className="text-2xl font-bold text-foreground">Run Payroll</h1>
+          <p className="text-muted-foreground">Create a new payroll run for your team</p>
         </div>
       </div>
 
@@ -109,26 +109,26 @@ export default function RunPayrollPage() {
           <div className="flex items-center justify-between">
             {steps.map((step, idx) => (
               <div key={step.id} className="flex items-center">
-                <div className={`flex items-center gap-3 ${currentStep >= step.id ? 'text-blue-600' : 'text-slate-400'}`}>
+                <div className={`flex items-center gap-3 ${currentStep >= step.id ? 'text-primary' : 'text-muted-foreground'}`}>
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                    currentStep > step.id ? 'bg-emerald-100' :
-                    currentStep === step.id ? 'bg-accent' : 'bg-slate-100'
+                    currentStep > step.id ? 'bg-accent' :
+                    currentStep === step.id ? 'bg-accent' : 'bg-accent/30'
                   }`}>
                     {currentStep > step.id ? (
-                      <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                      <CheckCircle2 className="w-5 h-5 text-primary" />
                     ) : (
-                      <step.icon className={`w-5 h-5 ${currentStep === step.id ? 'text-primary' : 'text-slate-400'}`} />
+                      <step.icon className={`w-5 h-5 ${currentStep === step.id ? 'text-primary' : 'text-muted-foreground'}`} />
                     )}
                   </div>
                   <span className={`hidden sm:block text-sm font-medium ${
-                    currentStep >= step.id ? 'text-slate-900' : 'text-slate-400'
+                    currentStep >= step.id ? 'text-foreground' : 'text-muted-foreground'
                   }`}>
                     {step.name}
                   </span>
                 </div>
                 {idx < steps.length - 1 && (
                   <div className={`w-12 lg:w-24 h-1 mx-4 rounded ${
-                    currentStep > step.id ? 'bg-emerald-500' : 'bg-slate-200'
+                    currentStep > step.id ? 'bg-primary' : 'bg-border'
                   }`} />
                 )}
               </div>
@@ -148,8 +148,8 @@ export default function RunPayrollPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="p-4 border-2 border-primary rounded-lg bg-accent">
                 <Badge className="bg-accent text-primary mb-2 border border-border">Current Period</Badge>
-                <p className="font-semibold text-slate-900">{payPeriod.start} - {payPeriod.end}</p>
-                <p className="text-sm text-slate-500">Pay Date: {payPeriod.payDate}</p>
+                <p className="font-semibold text-foreground">{payPeriod.start} - {payPeriod.end}</p>
+                <p className="text-sm text-muted-foreground">Pay Date: {payPeriod.payDate}</p>
               </div>
             </div>
             <div className="flex justify-end">
@@ -171,19 +171,19 @@ export default function RunPayrollPage() {
           <CardContent>
             <div className="space-y-3 mb-6">
               {employees.map(emp => (
-                <div key={emp.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                <div key={emp.id} className="flex items-center justify-between p-3 bg-accent/50 rounded-lg">
                   <div className="flex items-center gap-3">
                     <Avatar>
                       <AvatarFallback className="bg-accent text-primary">{emp.avatar}</AvatarFallback>
                     </Avatar>
                     <div>
-                      <p className="font-medium text-slate-900">{emp.name}</p>
-                      <p className="text-sm text-slate-500">{emp.department}</p>
+                      <p className="font-medium text-foreground">{emp.name}</p>
+                      <p className="text-sm text-muted-foreground">{emp.department}</p>
                     </div>
                   </div>
                   <div className="text-right">
                     <p className="font-medium">{emp.hours} hours</p>
-                    <p className="text-sm text-slate-500">Regular time</p>
+                    <p className="text-sm text-muted-foreground">Regular time</p>
                   </div>
                 </div>
               ))}
@@ -214,8 +214,8 @@ export default function RunPayrollPage() {
                 <div className="w-20 h-20 bg-accent rounded-full flex items-center justify-center mx-auto mb-6">
                   <Calculator className="w-10 h-10 text-primary" />
                 </div>
-                <h3 className="text-xl font-semibold text-slate-900 mb-2">Ready to Calculate</h3>
-                <p className="text-slate-600 mb-6">Click the button below to calculate payroll for {employees.length} employees</p>
+                <h3 className="text-xl font-semibold text-foreground mb-2">Ready to Calculate</h3>
+                <p className="text-muted-foreground mb-6">Click the button below to calculate payroll for {employees.length} employees</p>
                 <Button size="lg" onClick={calculatePayroll} className="bg-primary hover:bg-primary/90">
                   <Sparkles className="w-5 h-5 mr-2" />
                   Calculate Payroll
@@ -224,28 +224,28 @@ export default function RunPayrollPage() {
             ) : (
               <div className="space-y-4">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-slate-700">
+                  <span className="text-sm font-medium text-foreground">
                     {isCalculating ? 'Calculating...' : 'Complete!'}
                   </span>
-                  <span className="text-sm text-slate-500">{Math.round(calculationProgress)}%</span>
+                  <span className="text-sm text-muted-foreground">{Math.round(calculationProgress)}%</span>
                 </div>
                 <Progress value={calculationProgress} className="h-3" />
 
                 <div className="space-y-2 mt-6">
                   {calculatedEmployees.map(emp => (
                     <div key={emp.id} className={`flex items-center justify-between p-3 rounded-lg transition-all ${
-                      emp.netPay > 0 ? 'bg-emerald-50' : 'bg-slate-50'
+                      emp.netPay > 0 ? 'bg-accent' : 'bg-accent/50'
                     }`}>
                       <div className="flex items-center gap-3">
                         {emp.netPay > 0 ? (
-                          <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                          <CheckCircle2 className="w-5 h-5 text-primary" />
                         ) : (
-                          <Loader2 className="w-5 h-5 text-slate-400 animate-spin" />
+                          <Loader2 className="w-5 h-5 text-muted-foreground animate-spin" />
                         )}
-                        <span className="font-medium text-slate-900">{emp.name}</span>
+                        <span className="font-medium text-foreground">{emp.name}</span>
                       </div>
                       {emp.netPay > 0 && (
-                        <span className="font-semibold text-emerald-600">
+                        <span className="font-semibold text-primary">
                           ${emp.netPay.toLocaleString()}
                         </span>
                       )}
@@ -275,9 +275,9 @@ export default function RunPayrollPage() {
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="p-4 bg-slate-50 rounded-lg">
-                <p className="text-sm text-slate-500">Gross Pay</p>
-                <p className="text-2xl font-bold text-slate-900">${totalGross.toLocaleString()}</p>
+              <div className="p-4 bg-accent/50 rounded-lg">
+                <p className="text-sm text-muted-foreground">Gross Pay</p>
+                <p className="text-2xl font-bold text-foreground">${totalGross.toLocaleString()}</p>
               </div>
               <div className="p-4 bg-red-50 rounded-lg">
                 <p className="text-sm text-red-600">Taxes</p>
@@ -287,9 +287,9 @@ export default function RunPayrollPage() {
                 <p className="text-sm text-amber-600">Deductions</p>
                 <p className="text-2xl font-bold text-amber-700">-${totalDeductions.toLocaleString()}</p>
               </div>
-              <div className="p-4 bg-emerald-50 rounded-lg">
-                <p className="text-sm text-emerald-600">Net Pay</p>
-                <p className="text-2xl font-bold text-emerald-700">${totalNet.toLocaleString()}</p>
+              <div className="p-4 bg-accent rounded-lg">
+                <p className="text-sm text-primary">Net Pay</p>
+                <p className="text-2xl font-bold text-primary">${totalNet.toLocaleString()}</p>
               </div>
             </div>
 
@@ -299,8 +299,8 @@ export default function RunPayrollPage() {
                   <Users className="w-6 h-6 text-primary" />
                 </div>
                 <div>
-                  <p className="font-semibold text-slate-900">{employees.length} Employees</p>
-                  <p className="text-sm text-slate-600">Pay Date: {payPeriod.payDate}</p>
+                  <p className="font-semibold text-foreground">{employees.length} Employees</p>
+                  <p className="text-sm text-muted-foreground">Pay Date: {payPeriod.payDate}</p>
                 </div>
               </div>
               <Badge className="bg-accent text-primary border border-border">Ready to Submit</Badge>

@@ -101,7 +101,7 @@ const SENTIMENT_CONFIG = {
 const PRIORITY_COLORS = {
   high: 'bg-red-100 text-red-700 border-red-200',
   medium: 'bg-yellow-100 text-yellow-700 border-yellow-200',
-  low: 'bg-blue-100 text-blue-700 border-blue-200',
+  low: 'bg-accent text-primary border-border',
 }
 
 const TAG_COLORS: Record<string, string> = {
@@ -262,8 +262,8 @@ export default function InsightsPage() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-blue-500/10">
-                <Users className="h-5 w-5 text-blue-500" />
+              <div className="p-2 rounded-lg bg-accent">
+                <Users className="h-5 w-5 text-primary" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{data.stats.active_conversations}</p>
@@ -288,8 +288,8 @@ export default function InsightsPage() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-purple-500/10">
-                <CheckCircle2 className="h-5 w-5 text-purple-500" />
+              <div className="p-2 rounded-lg bg-accent">
+                <CheckCircle2 className="h-5 w-5 text-primary" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{data.stats.summaries_count}</p>

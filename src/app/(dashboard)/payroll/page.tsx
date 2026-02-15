@@ -320,8 +320,8 @@ export default function PayrollPage() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
-                <DollarSign className="w-5 h-5 text-emerald-600" />
+              <div className="w-10 h-10 bg-accent rounded-lg flex items-center justify-center">
+                <DollarSign className="w-5 h-5 text-primary" />
               </div>
               <div>
                 <p className="text-2xl font-bold text-foreground">$124,850</p>
@@ -346,8 +346,8 @@ export default function PayrollPage() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
-                <Clock className="w-5 h-5 text-amber-600" />
+              <div className="w-10 h-10 bg-accent rounded-lg flex items-center justify-center">
+                <Clock className="w-5 h-5 text-primary" />
               </div>
               <div>
                 <p className="text-2xl font-bold text-foreground">Feb 20</p>
@@ -359,8 +359,8 @@ export default function PayrollPage() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-violet-100 rounded-lg flex items-center justify-center">
-                <Calculator className="w-5 h-5 text-violet-600" />
+              <div className="w-10 h-10 bg-accent rounded-lg flex items-center justify-center">
+                <Calculator className="w-5 h-5 text-primary" />
               </div>
               <div>
                 <p className="text-2xl font-bold text-foreground">$487K</p>
@@ -406,7 +406,7 @@ export default function PayrollPage() {
                 </TableHeader>
                 <TableBody>
                   {currentPayrollEmployees.map((emp) => (
-                    <TableRow key={emp.id} className="cursor-pointer hover:bg-slate-50" onClick={() => handleViewPayStub(emp)}>
+                    <TableRow key={emp.id} className="cursor-pointer hover:bg-accent/50" onClick={() => handleViewPayStub(emp)}>
                       <TableCell>
                         <div className="flex items-center gap-3">
                           <Avatar className="w-8 h-8">
@@ -423,13 +423,13 @@ export default function PayrollPage() {
                         {emp.overtimeHours > 0 ? (
                           <span className="text-amber-600 font-medium">{emp.overtimeHours}</span>
                         ) : (
-                          <span className="text-slate-400">0</span>
+                          <span className="text-muted-foreground">0</span>
                         )}
                       </TableCell>
                       <TableCell className="text-right font-medium">${emp.grossPay.toLocaleString()}</TableCell>
                       <TableCell className="text-right text-red-600">-${emp.taxes.toLocaleString()}</TableCell>
                       <TableCell className="text-right text-amber-600">-${emp.deductions.toLocaleString()}</TableCell>
-                      <TableCell className="text-right font-semibold text-emerald-600">${emp.netPay.toLocaleString()}</TableCell>
+                      <TableCell className="text-right font-semibold text-primary">${emp.netPay.toLocaleString()}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -464,7 +464,7 @@ export default function PayrollPage() {
                       <TableCell>{run.payDate}</TableCell>
                       <TableCell>{run.employees}</TableCell>
                       <TableCell className="text-right">${run.grossPay.toLocaleString()}</TableCell>
-                      <TableCell className="text-right font-medium text-emerald-600">
+                      <TableCell className="text-right font-medium text-primary">
                         ${run.netPay.toLocaleString()}
                       </TableCell>
                       <TableCell>{getStatusBadge(run.status)}</TableCell>
@@ -513,7 +513,7 @@ export default function PayrollPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
-            <div className="bg-slate-50 rounded-lg p-4 space-y-3">
+            <div className="bg-accent/50 rounded-lg p-4 space-y-3">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Employees</span>
                 <span className="font-medium">{selectedPayroll?.employees}</span>
@@ -524,7 +524,7 @@ export default function PayrollPage() {
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Total Net Pay</span>
-                <span className="font-semibold text-emerald-600">${selectedPayroll?.netPay.toLocaleString()}</span>
+                <span className="font-semibold text-primary">${selectedPayroll?.netPay.toLocaleString()}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Pay Date</span>
@@ -537,7 +537,7 @@ export default function PayrollPage() {
               Cancel
             </Button>
             <Button
-              className="bg-emerald-600 hover:bg-emerald-700"
+              className="bg-primary hover:bg-primary/90"
               onClick={handleApprovePayroll}
               disabled={isProcessing}
             >
@@ -578,7 +578,7 @@ export default function PayrollPage() {
           </DialogHeader>
           <div className="space-y-4">
             {/* Earnings Section */}
-            <div className="bg-slate-50 rounded-lg p-4">
+            <div className="bg-accent/50 rounded-lg p-4">
               <h4 className="font-semibold text-foreground mb-3">Earnings</h4>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
@@ -649,13 +649,13 @@ export default function PayrollPage() {
             </div>
 
             {/* Net Pay Section */}
-            <div className="bg-emerald-100 rounded-lg p-4">
+            <div className="bg-accent rounded-lg p-4">
               <div className="flex justify-between items-center">
                 <div>
-                  <h4 className="font-semibold text-emerald-900">Net Pay</h4>
-                  <p className="text-sm text-emerald-700">Direct deposit on Feb 20, 2026</p>
+                  <h4 className="font-semibold text-foreground">Net Pay</h4>
+                  <p className="text-sm text-primary">Direct deposit on Feb 20, 2026</p>
                 </div>
-                <span className="text-2xl font-bold text-emerald-700">${selectedEmployee?.netPay.toLocaleString()}</span>
+                <span className="text-2xl font-bold text-primary">${selectedEmployee?.netPay.toLocaleString()}</span>
               </div>
             </div>
 
@@ -671,7 +671,7 @@ export default function PayrollPage() {
               </div>
               <div className="text-center">
                 <p className="text-sm text-muted-foreground">YTD Net</p>
-                <p className="font-semibold text-emerald-600">${((selectedEmployee?.netPay || 0) * 4).toLocaleString()}</p>
+                <p className="font-semibold text-primary">${((selectedEmployee?.netPay || 0) * 4).toLocaleString()}</p>
               </div>
             </div>
           </div>
