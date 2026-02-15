@@ -3,23 +3,58 @@
 
 export const DEMO_COMPANY_ID = '00000000-0000-0000-0000-000000000001'
 export const DEMO_USER_ID = '00000000-0000-0000-0000-000000000002'
+export const SARAH_USER_ID = '00000000-0000-0000-0000-000000000010' // Sarah Chen's auth user ID
+
+export type DemoRole = 'owner' | 'admin' | 'hr_manager' | 'manager' | 'employee' | 'member'
 
 export interface DemoContext {
   userId: string
   companyId: string
-  role: 'owner' | 'admin' | 'hr_manager' | 'manager' | 'employee'
+  role: DemoRole
   email: string
   fullName: string
   companyName: string
+  isAdmin: boolean
 }
 
+// Admin demo user (HR Manager/Owner view)
 export const DEMO_CONTEXT: DemoContext = {
   userId: DEMO_USER_ID,
   companyId: DEMO_COMPANY_ID,
   role: 'owner',
-  email: 'demo@paypilot.com',
-  fullName: 'Demo User',
+  email: 'demo@acme.com',
+  fullName: 'Demo Admin',
   companyName: 'Acme Technologies',
+  isAdmin: true,
+}
+
+// Sarah Chen - Employee view (for demonstrating employee experience)
+export const SARAH_CONTEXT: DemoContext = {
+  userId: SARAH_USER_ID,
+  companyId: DEMO_COMPANY_ID,
+  role: 'member',
+  email: 'sarah.chen@acme.com',
+  fullName: 'Sarah Chen',
+  companyName: 'Acme Technologies',
+  isAdmin: false,
+}
+
+// Map of demo users by email
+export const DEMO_USERS: Record<string, DemoContext> = {
+  'demo@acme.com': DEMO_CONTEXT,
+  'demo@paypilot.com': DEMO_CONTEXT, // Legacy support
+  'sarah.chen@acme.com': SARAH_CONTEXT,
+  'sarah@acme.com': SARAH_CONTEXT, // Alias
+}
+
+// Get demo context by email
+export function getDemoContextByEmail(email: string): DemoContext | null {
+  return DEMO_USERS[email.toLowerCase()] || null
+}
+
+// Check if role is admin-level
+export function isAdminRole(role: DemoRole): boolean {
+  return ['owner', 'admin', 'hr_manager'].includes(role)
 }
 
 // Demo employees for the employee picker
@@ -67,8 +102,10 @@ export const DEMO_AGENT_INSTANCES = [
   },
 ]
 
-// Demo conversations
+// Demo conversations - each user has their own conversations
+// Admin can see all, employees only see their own
 export const DEMO_CONVERSATIONS = [
+  // Demo Admin's conversations (visible to admin only in their view, admin can see all)
   {
     id: '00000000-0000-0000-0000-000000000201',
     company_id: DEMO_COMPANY_ID,
@@ -105,7 +142,36 @@ export const DEMO_CONVERSATIONS = [
       },
     },
   },
+  // Sarah Chen's conversation (she only sees this when logged in as Sarah)
+  {
+    id: '00000000-0000-0000-0000-000000000203',
+    company_id: DEMO_COMPANY_ID,
+    agent_instance_id: '00000000-0000-0000-0000-000000000101',
+    participant_user_id: SARAH_USER_ID,
+    status: 'active',
+    unread_count: 1,
+    message_count: 1,
+    last_message_at: new Date(Date.now() - 60000).toISOString(), // 1 minute ago
+    agent_instances: {
+      id: '00000000-0000-0000-0000-000000000101',
+      name: 'Weekly Pulse Check',
+      agents: {
+        name: 'Pulse Check Agent',
+        agent_type: 'pulse_check',
+      },
+    },
+  },
 ]
+
+// Filter conversations by user (for employee view)
+export function getConversationsForUser(userId: string, isAdmin: boolean): typeof DEMO_CONVERSATIONS {
+  if (isAdmin) {
+    // Admin sees all conversations in the company
+    return DEMO_CONVERSATIONS
+  }
+  // Employee only sees their own conversations
+  return DEMO_CONVERSATIONS.filter(c => c.participant_user_id === userId)
+}
 
 // Demo messages for conversations
 export const DEMO_MESSAGES: Record<string, Array<{
@@ -193,13 +259,65 @@ export const DEMO_MESSAGES: Record<string, Array<{
       is_read: true,
     },
   ],
+  // Sarah Chen's conversation messages
+  '00000000-0000-0000-0000-000000000203': [
+    {
+      id: '00000000-0000-0000-0000-000000000309',
+      conversation_id: '00000000-0000-0000-0000-000000000203',
+      content: "Hey Sarah! Quick check-in - how's your week going so far? 🙂",
+      sender_type: 'agent',
+      content_type: 'text',
+      created_at: new Date(Date.now() - 60000).toISOString(), // 1 minute ago
+      is_read: false,
+    },
+  ],
 }
 
 // In-memory storage for demo mode messages (for real-time feel)
 const demoMessageStore: Record<string, typeof DEMO_MESSAGES[string]> = { ...DEMO_MESSAGES }
 
+// In-memory storage for dynamically created conversations (from Run button)
+const dynamicConversationStore: Map<string, typeof DEMO_CONVERSATIONS[0]> = new Map()
+
+// Add a dynamically created conversation (called from Run button)
+export function addDynamicDemoConversation(conversation: typeof DEMO_CONVERSATIONS[0]) {
+  dynamicConversationStore.set(conversation.id, conversation)
+}
+
+// Get all dynamically created conversations
+export function getDynamicDemoConversations(): typeof DEMO_CONVERSATIONS {
+  return Array.from(dynamicConversationStore.values())
+}
+
+// Get all demo conversations (base + dynamic) for a user
+export function getAllDemoConversations(userId: string, isAdmin: boolean): typeof DEMO_CONVERSATIONS {
+  // Get base conversations filtered by user
+  const baseConversations = getConversationsForUser(userId, isAdmin)
+
+  // Get dynamic conversations filtered by user
+  const dynamicConversations = getDynamicDemoConversations()
+  const filteredDynamic = isAdmin
+    ? dynamicConversations
+    : dynamicConversations.filter(c => c.participant_user_id === userId)
+
+  // Merge avoiding duplicates
+  const baseIds = new Set(baseConversations.map(c => c.id))
+  const merged = [...baseConversations]
+  for (const dyn of filteredDynamic) {
+    if (!baseIds.has(dyn.id)) {
+      merged.push(dyn)
+    }
+  }
+
+  return merged
+}
+
 export function getDemoConversation(conversationId: string) {
-  return DEMO_CONVERSATIONS.find(c => c.id === conversationId) || null
+  // Check base conversations first
+  const base = DEMO_CONVERSATIONS.find(c => c.id === conversationId)
+  if (base) return base
+  // Check dynamic conversations
+  return dynamicConversationStore.get(conversationId) || null
 }
 
 export function getDemoMessages(conversationId: string) {

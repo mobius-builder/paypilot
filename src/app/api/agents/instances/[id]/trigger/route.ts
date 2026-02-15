@@ -1,74 +1,254 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
-import { orchestrator } from '@/lib/agents'
+import { getAuthContext } from '@/lib/api-auth'
+import {
+  DEMO_EMPLOYEES,
+  DEMO_AGENT_INSTANCES,
+  addDemoMessage,
+  addDynamicDemoConversation,
+  DEMO_COMPANY_ID,
+} from '@/lib/demo-context'
+import { generateInitialMessage, isAnthropicConfigured } from '@/lib/anthropic'
 
-// POST /api/agents/instances/[id]/trigger - Manually trigger agent
+// POST /api/agents/instances/[id]/trigger - Manually trigger agent (Run button)
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = await createClient()
+    const authContext = await getAuthContext()
     const { id } = await params
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-
-    if (authError || !user) {
+    if (!authContext) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Verify permissions
-    const { data: membership } = await supabase
-      .from('company_members')
-      .select('company_id, role')
-      .eq('user_id', user.id)
-      .single()
-
-    if (!membership || !['owner', 'admin', 'hr_manager'].includes(membership.role)) {
-      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
-    }
-
-    // Verify instance exists and belongs to company
-    const { data: instance } = await supabase
-      .from('agent_instances')
-      .select('id, status')
-      .eq('id', id)
-      .eq('company_id', membership.company_id)
-      .single()
-
-    if (!instance) {
-      return NextResponse.json({ error: 'Instance not found' }, { status: 404 })
-    }
-
-    if (instance.status !== 'active') {
-      return NextResponse.json({ error: 'Agent is not active' }, { status: 400 })
+    // RBAC: Only admins can run agents
+    if (!authContext.isAdmin) {
+      return NextResponse.json({
+        error: 'Insufficient permissions. Only admins can run agents.'
+      }, { status: 403 })
     }
 
     // Parse optional target employees
     const body = await request.json().catch(() => ({}))
     const targetEmployees = body.target_employees as string[] | undefined
 
-    // Trigger the agent
-    const result = await orchestrator.triggerAgentRun(id, 'manual', targetEmployees)
+    // Demo mode handling
+    if (authContext.isDemo) {
+      // Find the agent instance
+      const agentInstance = DEMO_AGENT_INSTANCES.find(a => a.id === id)
+      if (!agentInstance) {
+        return NextResponse.json({ error: 'Agent instance not found' }, { status: 404 })
+      }
 
-    // Log action
+      // Get target employees (specific list or all)
+      const employees = targetEmployees && targetEmployees.length > 0
+        ? DEMO_EMPLOYEES.filter(e => targetEmployees.includes(e.id))
+        : DEMO_EMPLOYEES
+
+      let messagesSent = 0
+      let conversationsTouched = 0
+
+      // For each target employee, create/update conversation and send message
+      for (const employee of employees) {
+        const conversationId = `demo-conv-${id}-${employee.id}`
+
+        // Generate personalized opening message
+        let openingMessage: string
+        if (isAnthropicConfigured()) {
+          try {
+            openingMessage = await generateInitialMessage({
+              employeeName: employee.full_name,
+              agentType: agentInstance.agent_type,
+              tonePreset: 'friendly_peer',
+            })
+          } catch {
+            openingMessage = `Hey ${employee.full_name.split(' ')[0]}! Quick check-in - how's your week going so far? 🙂`
+          }
+        } else {
+          openingMessage = `Hey ${employee.full_name.split(' ')[0]}! Quick check-in - how's your week going so far? 🙂`
+        }
+
+        // Create conversation in demo store
+        addDynamicDemoConversation({
+          id: conversationId,
+          company_id: DEMO_COMPANY_ID,
+          agent_instance_id: id,
+          participant_user_id: employee.id,
+          status: 'active',
+          unread_count: 1,
+          message_count: 1,
+          last_message_at: new Date().toISOString(),
+          agent_instances: {
+            id: agentInstance.id,
+            name: agentInstance.name,
+            agents: {
+              name: agentInstance.agents.name,
+              agent_type: agentInstance.agent_type,
+            },
+          },
+        } as typeof import('@/lib/demo-context').DEMO_CONVERSATIONS[0])
+
+        // Add message to conversation
+        addDemoMessage(conversationId, openingMessage, 'agent')
+
+        messagesSent++
+        conversationsTouched++
+      }
+
+      return NextResponse.json({
+        success: true,
+        run_id: `demo-run-${Date.now()}`,
+        messages_sent: messagesSent,
+        conversations_touched: conversationsTouched,
+        message: `Agent triggered successfully. Sent ${messagesSent} messages to ${conversationsTouched} employees.`,
+      })
+    }
+
+    // Real Supabase mode
+    const supabase = await createClient()
+
+    // Verify instance exists and belongs to company
+    const { data: instance, error: instanceError } = await supabase
+      .from('agent_instances')
+      .select('id, status, company_id, name, agent_id, config, agents(name, agent_type)')
+      .eq('id', id)
+      .eq('company_id', authContext.companyId)
+      .single()
+
+    if (instanceError || !instance) {
+      return NextResponse.json({ error: 'Agent instance not found' }, { status: 404 })
+    }
+
+    if (instance.status !== 'active') {
+      return NextResponse.json({ error: 'Agent is not active' }, { status: 400 })
+    }
+
+    // Create agent run record
+    const { data: run, error: runError } = await supabase
+      .from('agent_runs')
+      .insert({
+        agent_instance_id: id,
+        run_type: 'manual',
+        status: 'running',
+      })
+      .select()
+      .single()
+
+    if (runError) {
+      console.error('Failed to create agent run:', runError)
+      return NextResponse.json({ error: 'Failed to create agent run' }, { status: 500 })
+    }
+
+    // Get target employees
+    let employeeQuery = supabase
+      .from('company_members')
+      .select('id, user_id, job_title, profiles(id, full_name, email)')
+      .eq('company_id', authContext.companyId)
+      .eq('status', 'active')
+
+    if (targetEmployees && targetEmployees.length > 0) {
+      employeeQuery = employeeQuery.in('user_id', targetEmployees)
+    }
+
+    const { data: employees } = await employeeQuery
+
+    let messagesSent = 0
+    let conversationsTouched = 0
+
+    // Process each employee
+    for (const employee of employees || []) {
+      // profiles can be an object or array depending on the query, handle both
+      const profileData = employee.profiles
+      const profile = Array.isArray(profileData) ? profileData[0] : profileData
+      if (!profile) continue
+      const profileTyped = profile as { id: string; full_name: string; email: string }
+
+      // Upsert conversation
+      const { data: conversation, error: convError } = await supabase
+        .from('conversations')
+        .upsert({
+          company_id: authContext.companyId,
+          agent_instance_id: id,
+          participant_user_id: profileTyped.id,
+          status: 'active',
+        }, {
+          onConflict: 'agent_instance_id,participant_user_id',
+        })
+        .select()
+        .single()
+
+      if (convError) {
+        console.error('Failed to upsert conversation:', convError)
+        continue
+      }
+
+      // Generate and insert agent message
+      const agentsData = instance.agents
+      const agentRecord = Array.isArray(agentsData) ? agentsData[0] : agentsData
+      const agentType = (agentRecord as { agent_type: string } | null)?.agent_type || 'pulse_check'
+      let openingMessage: string
+
+      if (isAnthropicConfigured()) {
+        try {
+          openingMessage = await generateInitialMessage({
+            employeeName: profileTyped.full_name,
+            agentType,
+            tonePreset: 'friendly_peer',
+          })
+        } catch {
+          openingMessage = `Hey ${profileTyped.full_name.split(' ')[0]}! Quick check-in - how's your week going so far?`
+        }
+      } else {
+        openingMessage = `Hey ${profileTyped.full_name.split(' ')[0]}! Quick check-in - how's your week going so far?`
+      }
+
+      // Insert message (using service role - bypasses RLS for agent messages)
+      const { error: msgError } = await supabase
+        .from('messages')
+        .insert({
+          conversation_id: conversation.id,
+          sender_type: 'agent',
+          content: openingMessage,
+          content_type: 'text',
+        })
+
+      if (!msgError) {
+        messagesSent++
+        conversationsTouched++
+      }
+    }
+
+    // Update agent run with results
+    await supabase
+      .from('agent_runs')
+      .update({
+        status: 'completed',
+        finished_at: new Date().toISOString(),
+        messages_sent: messagesSent,
+        conversations_touched: conversationsTouched,
+      })
+      .eq('id', run.id)
+
+    // Log audit
     await supabase
       .from('audit_logs')
       .insert({
-        company_id: membership.company_id,
-        actor_user_id: user.id,
-        actor_role: membership.role,
+        company_id: authContext.companyId,
+        actor_user_id: authContext.userId,
+        actor_role: authContext.role,
         action: 'agent_triggered',
         target_type: 'agent_instance',
         target_id: id,
-        after_state: result,
+        after_state: { run_id: run.id, messages_sent: messagesSent },
       })
 
     return NextResponse.json({
       success: true,
-      run_id: result.runId,
-      messages_sent: result.messagesSent,
-      conversations_touched: result.conversationsTouched,
+      run_id: run.id,
+      messages_sent: messagesSent,
+      conversations_touched: conversationsTouched,
     })
   } catch (error) {
     console.error('Trigger agent error:', error)

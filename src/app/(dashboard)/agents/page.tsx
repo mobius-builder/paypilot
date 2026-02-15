@@ -144,14 +144,27 @@ function useDebounce<T>(value: T, delay: number): T {
   return debouncedValue
 }
 
+interface UserContext {
+  userId: string
+  role: string
+  isAdmin: boolean
+  isDemo: boolean
+  fullName?: string
+  email?: string
+}
+
 export default function AgentsPage() {
   const [instances, setInstances] = useState<AgentInstance[]>([])
   const [agents, setAgents] = useState<Agent[]>([])
   const [tonePresets, setTonePresets] = useState<TonePreset[]>([])
+  const [userContext, setUserContext] = useState<UserContext | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
   const [hasShownMembershipError, setHasShownMembershipError] = useState(false)
+
+  // Check if user is admin (can create/run agents)
+  const isAdmin = userContext?.isAdmin ?? false
 
   // Form state
   const [selectedAgentId, setSelectedAgentId] = useState('')
@@ -191,6 +204,13 @@ export default function AgentsPage() {
   const fetchData = async () => {
     setIsLoading(true)
     try {
+      // Fetch user context first to determine permissions
+      const userRes = await fetch('/api/auth/me')
+      if (userRes.ok) {
+        const userData = await userRes.json()
+        setUserContext(userData)
+      }
+
       const [instancesRes, agentsRes] = await Promise.all([
         fetch('/api/agents/instances'),
         fetch('/api/agents'),
@@ -404,10 +424,17 @@ export default function AgentsPage() {
             Create and manage automated employee engagement agents
           </p>
         </div>
-        <Button onClick={() => setIsCreateOpen(true)} className="gap-2">
-          <Plus className="h-4 w-4" />
-          Create Agent
-        </Button>
+        {isAdmin && (
+          <Button onClick={() => setIsCreateOpen(true)} className="gap-2">
+            <Plus className="h-4 w-4" />
+            Create Agent
+          </Button>
+        )}
+        {!isAdmin && userContext && (
+          <Badge variant="outline" className="text-muted-foreground">
+            View Only
+          </Badge>
+        )}
       </div>
 
       {/* Stats Overview */}
@@ -479,10 +506,16 @@ export default function AgentsPage() {
             <p className="text-muted-foreground mb-4">
               Create your first AI agent to start collecting employee feedback
             </p>
-            <Button onClick={() => setIsCreateOpen(true)} className="gap-2">
-              <Plus className="h-4 w-4" />
-              Create Agent
-            </Button>
+            {isAdmin ? (
+              <Button onClick={() => setIsCreateOpen(true)} className="gap-2">
+                <Plus className="h-4 w-4" />
+                Create Agent
+              </Button>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Contact your HR administrator to set up AI agents.
+              </p>
+            )}
           </CardContent>
         </Card>
       ) : (
@@ -508,34 +541,36 @@ export default function AgentsPage() {
                         </p>
                       </div>
                     </div>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleTrigger(instance.id)}>
-                          <Play className="h-4 w-4 mr-2" />
-                          Trigger Now
-                        </DropdownMenuItem>
-                        {instance.status === 'active' ? (
-                          <DropdownMenuItem onClick={() => handleStatusChange(instance.id, 'paused')}>
-                            <Pause className="h-4 w-4 mr-2" />
-                            Pause
-                          </DropdownMenuItem>
-                        ) : (
-                          <DropdownMenuItem onClick={() => handleStatusChange(instance.id, 'active')}>
+                    {isAdmin && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleTrigger(instance.id)}>
                             <Play className="h-4 w-4 mr-2" />
-                            Activate
+                            Run Now
                           </DropdownMenuItem>
-                        )}
-                        <DropdownMenuItem>
-                          <Settings className="h-4 w-4 mr-2" />
-                          Settings
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                          {instance.status === 'active' ? (
+                            <DropdownMenuItem onClick={() => handleStatusChange(instance.id, 'paused')}>
+                              <Pause className="h-4 w-4 mr-2" />
+                              Pause
+                            </DropdownMenuItem>
+                          ) : (
+                            <DropdownMenuItem onClick={() => handleStatusChange(instance.id, 'active')}>
+                              <Play className="h-4 w-4 mr-2" />
+                              Activate
+                            </DropdownMenuItem>
+                          )}
+                          <DropdownMenuItem>
+                            <Settings className="h-4 w-4 mr-2" />
+                            Settings
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">

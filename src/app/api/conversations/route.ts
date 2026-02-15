@@ -1,7 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { getAuthContext } from '@/lib/api-auth'
-import { DEMO_CONVERSATIONS, DEMO_MESSAGES } from '@/lib/demo-context'
+import {
+  getAllDemoConversations,
+  getDemoMessages,
+} from '@/lib/demo-context'
 
 // GET /api/conversations - List conversations
 export async function GET(request: Request) {
@@ -15,13 +18,23 @@ export async function GET(request: Request) {
     const url = new URL(request.url)
     const view = url.searchParams.get('view') || 'employee' // 'employee' or 'admin'
 
-    // Demo mode - return mock conversations
+    // Demo mode - return mock conversations based on user role
     if (authContext.isDemo) {
-      const demoConversations = DEMO_CONVERSATIONS.map(conv => ({
+      // Get all conversations for this user (base + dynamic, filtered by role)
+      const conversations = getAllDemoConversations(authContext.userId, authContext.isAdmin)
+
+      // Add latest message to each conversation
+      const conversationsWithPreview = conversations.map(conv => ({
         ...conv,
-        latest_message: DEMO_MESSAGES[conv.id]?.[DEMO_MESSAGES[conv.id].length - 1] || null,
+        latest_message: getDemoMessages(conv.id)?.slice(-1)[0] || null,
       }))
-      return NextResponse.json({ conversations: demoConversations })
+
+      // Sort by last_message_at desc
+      conversationsWithPreview.sort((a, b) =>
+        new Date(b.last_message_at).getTime() - new Date(a.last_message_at).getTime()
+      )
+
+      return NextResponse.json({ conversations: conversationsWithPreview })
     }
 
     // Real Supabase query
@@ -51,7 +64,7 @@ export async function GET(request: Request) {
 
     // Employee view: only their conversations
     // Admin view: all conversations
-    if (view === 'employee' || !['owner', 'admin', 'hr_manager', 'manager'].includes(authContext.role)) {
+    if (view === 'employee' || !authContext.isAdmin) {
       query = query.eq('participant_user_id', authContext.userId)
     }
 

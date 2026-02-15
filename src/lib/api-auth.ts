@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import { DEMO_CONTEXT, DemoContext } from '@/lib/demo-context'
+import { DEMO_CONTEXT, SARAH_CONTEXT, getDemoContextByEmail, isAdminRole, DemoRole } from '@/lib/demo-context'
 import { cookies } from 'next/headers'
 
 export interface AuthContext {
@@ -7,6 +7,9 @@ export interface AuthContext {
   companyId: string
   role: string
   isDemo: boolean
+  isAdmin: boolean // True for owner, admin, hr_manager
+  fullName?: string
+  email?: string
 }
 
 /**
@@ -42,18 +45,26 @@ export async function getAuthContext(): Promise<AuthContext | null> {
           companyId: membership.company_id,
           role: membership.role,
           isDemo: false,
+          isAdmin: isAdminRole(membership.role as DemoRole),
+          email: user.email,
         }
       }
 
       // User exists but has no company membership
-      // Try to auto-create membership for demo company if using demo email
-      if (user.email === 'demo@paypilot.com') {
-        console.log('[Auth] Demo user detected without membership, using demo context')
-        return {
-          userId: user.id,
-          companyId: DEMO_CONTEXT.companyId,
-          role: 'owner',
-          isDemo: true,
+      // Check if it's a known demo email
+      if (user.email) {
+        const demoContext = getDemoContextByEmail(user.email)
+        if (demoContext) {
+          console.log('[Auth] Demo user detected:', user.email)
+          return {
+            userId: demoContext.userId,
+            companyId: demoContext.companyId,
+            role: demoContext.role,
+            isDemo: true,
+            isAdmin: demoContext.isAdmin,
+            fullName: demoContext.fullName,
+            email: demoContext.email,
+          }
         }
       }
 
@@ -61,22 +72,41 @@ export async function getAuthContext(): Promise<AuthContext | null> {
       return null
     }
 
-    // No Supabase auth - check for demo mode cookie/header
+    // No Supabase auth - check for demo mode cookie
     const cookieStore = await cookies()
     const demoSession = cookieStore.get('paypilot_demo_mode')
+    const demoEmail = cookieStore.get('paypilot_demo_email')
 
-    // Also check for demo mode from request headers (for API calls from demo frontend)
     if (demoSession?.value === 'true') {
+      // Get demo context for specific user if email cookie is set
+      if (demoEmail?.value) {
+        const demoContext = getDemoContextByEmail(demoEmail.value)
+        if (demoContext) {
+          return {
+            userId: demoContext.userId,
+            companyId: demoContext.companyId,
+            role: demoContext.role,
+            isDemo: true,
+            isAdmin: demoContext.isAdmin,
+            fullName: demoContext.fullName,
+            email: demoContext.email,
+          }
+        }
+      }
+
+      // Default to admin demo user
       return {
         userId: DEMO_CONTEXT.userId,
         companyId: DEMO_CONTEXT.companyId,
         role: DEMO_CONTEXT.role,
         isDemo: true,
+        isAdmin: DEMO_CONTEXT.isAdmin,
+        fullName: DEMO_CONTEXT.fullName,
+        email: DEMO_CONTEXT.email,
       }
     }
 
     // Default to demo mode for development if no auth is present
-    // This allows the UI to work even without a real Supabase connection
     if (process.env.NODE_ENV === 'development' || process.env.PAYPILOT_DEMO_MODE === 'true') {
       console.log('[Auth] No auth detected, falling back to demo mode')
       return {
@@ -84,6 +114,9 @@ export async function getAuthContext(): Promise<AuthContext | null> {
         companyId: DEMO_CONTEXT.companyId,
         role: DEMO_CONTEXT.role,
         isDemo: true,
+        isAdmin: DEMO_CONTEXT.isAdmin,
+        fullName: DEMO_CONTEXT.fullName,
+        email: DEMO_CONTEXT.email,
       }
     }
 
@@ -98,6 +131,9 @@ export async function getAuthContext(): Promise<AuthContext | null> {
         companyId: DEMO_CONTEXT.companyId,
         role: DEMO_CONTEXT.role,
         isDemo: true,
+        isAdmin: DEMO_CONTEXT.isAdmin,
+        fullName: DEMO_CONTEXT.fullName,
+        email: DEMO_CONTEXT.email,
       }
     }
 
@@ -117,8 +153,26 @@ export async function requireAuth(): Promise<AuthContext> {
 }
 
 /**
+ * Require admin role (owner, admin, hr_manager)
+ */
+export async function requireAdmin(): Promise<AuthContext> {
+  const context = await requireAuth()
+  if (!context.isAdmin) {
+    throw new Error('Forbidden: Admin access required')
+  }
+  return context
+}
+
+/**
  * Check if user has required role
  */
 export function hasRole(context: AuthContext, requiredRoles: string[]): boolean {
   return requiredRoles.includes(context.role)
+}
+
+/**
+ * Check if user is admin
+ */
+export function checkAdmin(context: AuthContext): boolean {
+  return context.isAdmin
 }
