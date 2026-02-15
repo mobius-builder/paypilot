@@ -7,8 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { Sparkles, Loader2, Building2 } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
+import { Sparkles, Loader2, Building2, Info } from 'lucide-react'
 import { toast } from 'sonner'
 
 export default function SignupPage() {
@@ -29,43 +28,38 @@ export default function SignupPage() {
     e.preventDefault()
 
     if (step === 1) {
+      // Validate step 1
+      if (!fullName || !email || !password) {
+        toast.error('Please fill in all fields')
+        return
+      }
+      if (password.length < 6) {
+        toast.error('Password must be at least 6 characters')
+        return
+      }
       setStep(2)
       return
     }
 
     setLoading(true)
 
-    try {
-      const supabase = createClient()
+    // Simulate network delay
+    await new Promise(resolve => setTimeout(resolve, 1000))
 
-      // Sign up the user
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            full_name: fullName,
-            company_name: companyName,
-            company_size: companySize,
-          }
-        }
-      })
+    // Demo mode: create session in localStorage
+    localStorage.setItem('paypilot_demo_session', JSON.stringify({
+      user: {
+        id: 'new-user-' + Date.now(),
+        email: email,
+        name: fullName,
+        role: 'company_admin',
+        company: companyName
+      },
+      expiresAt: Date.now() + 24 * 60 * 60 * 1000 // 24 hours
+    }))
 
-      if (error) {
-        toast.error(error.message)
-        return
-      }
-
-      if (data.user) {
-        toast.success('Account created! Redirecting to dashboard...')
-        router.push('/dashboard')
-        router.refresh()
-      }
-    } catch {
-      toast.error('An error occurred. Please try again.')
-    } finally {
-      setLoading(false)
-    }
+    toast.success('Account created! Welcome to PayPilot!')
+    router.push('/dashboard')
   }
 
   return (
@@ -80,6 +74,18 @@ export default function SignupPage() {
               PayPilot
             </span>
           </Link>
+        </div>
+
+        {/* Demo notice */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 flex items-start gap-3">
+          <Info className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+          <div>
+            <p className="text-sm font-medium text-blue-900">Demo Mode</p>
+            <p className="text-sm text-blue-700">
+              This is a demo. Your data won&apos;t be saved permanently. Or{' '}
+              <Link href="/login" className="underline font-medium">login with demo credentials</Link>.
+            </p>
+          </div>
         </div>
 
         <Card className="shadow-lg">
@@ -132,10 +138,10 @@ export default function SignupPage() {
                       placeholder="Create a strong password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      minLength={8}
+                      minLength={6}
                       required
                     />
-                    <p className="text-xs text-slate-500">Must be at least 8 characters</p>
+                    <p className="text-xs text-slate-500">Must be at least 6 characters</p>
                   </div>
                 </>
               ) : (

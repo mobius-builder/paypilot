@@ -2,16 +2,23 @@
 
 Next.js app for PayPilot.
 
-## Run (Modal CPU by default)
+## Run On Desktop (default)
 
 ```bash
 npm run dev
 ```
 
-This uses the repo-level `scripts/modal-run` wrapper and streams logs to your local terminal.
-When the app starts, the script prints a tunnel URL for port `3000`.
+## Run Safe Copy On Modal CPU
 
-## Build / Start / Lint (Modal CPU)
+```bash
+npm run dev:safe
+```
+
+This runs the same `npm run dev` flow in Modal and prints a tunnel URL for port `3000`.
+
+## Build / Start / Lint
+
+Desktop:
 
 ```bash
 npm run build
@@ -19,13 +26,10 @@ npm run start
 npm run lint
 ```
 
-## Local Fallback
-
-If you need to run directly on your machine:
+Safe (Modal):
 
 ```bash
-npm run dev:local
-npm run build:local
-npm run start:local
-npm run lint:local
+npm run build:safe
+npm run start:safe
+npm run lint:safe
 ```

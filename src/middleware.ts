@@ -1,8 +1,17 @@
-import { type NextRequest } from 'next/server'
-import { updateSession } from '@/lib/supabase/middleware'
+import { NextResponse, type NextRequest } from 'next/server'
+
+// Demo mode middleware - doesn't require Supabase
+// In production, this would use the Supabase middleware
 
 export async function middleware(request: NextRequest) {
-  return await updateSession(request)
+  // For demo mode, we just pass through all requests
+  // Auth is handled client-side with localStorage
+
+  // In production, uncomment:
+  // import { updateSession } from '@/lib/supabase/middleware'
+  // return await updateSession(request)
+
+  return NextResponse.next()
 }
 
 export const config = {

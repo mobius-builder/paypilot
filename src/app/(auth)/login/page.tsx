@@ -7,9 +7,14 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { Sparkles, Loader2 } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
+import { Sparkles, Loader2, Info } from 'lucide-react'
 import { toast } from 'sonner'
+
+// Demo mode - works without Supabase
+const DEMO_CREDENTIALS = {
+  email: 'demo@acme.com',
+  password: 'demo123'
+}
 
 export default function LoginPage() {
   const router = useRouter()
@@ -21,26 +26,37 @@ export default function LoginPage() {
     e.preventDefault()
     setLoading(true)
 
-    try {
-      const supabase = createClient()
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
+    // Simulate network delay
+    await new Promise(resolve => setTimeout(resolve, 800))
 
-      if (error) {
-        toast.error(error.message)
-        return
-      }
+    // Demo mode: accept demo credentials or any valid-looking input
+    if (
+      (email === DEMO_CREDENTIALS.email && password === DEMO_CREDENTIALS.password) ||
+      (email.includes('@') && password.length >= 4)
+    ) {
+      // Store demo session in localStorage
+      localStorage.setItem('paypilot_demo_session', JSON.stringify({
+        user: {
+          id: 'demo-user-001',
+          email: email,
+          name: 'John Doe',
+          role: 'company_admin',
+          company: 'Acme Technologies'
+        },
+        expiresAt: Date.now() + 24 * 60 * 60 * 1000 // 24 hours
+      }))
 
       toast.success('Welcome back!')
       router.push('/dashboard')
-      router.refresh()
-    } catch {
-      toast.error('An error occurred. Please try again.')
-    } finally {
+    } else {
+      toast.error('Invalid credentials. Try demo@acme.com / demo123')
       setLoading(false)
     }
+  }
+
+  const handleDemoLogin = () => {
+    setEmail(DEMO_CREDENTIALS.email)
+    setPassword(DEMO_CREDENTIALS.password)
   }
 
   return (
@@ -57,6 +73,17 @@ export default function LoginPage() {
           </Link>
         </div>
 
+        {/* Demo notice */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 flex items-start gap-3">
+          <Info className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+          <div>
+            <p className="text-sm font-medium text-blue-900">Demo Mode</p>
+            <p className="text-sm text-blue-700">
+              Use <button onClick={handleDemoLogin} className="font-mono underline">demo@acme.com</button> / <span className="font-mono">demo123</span> or any email with 4+ char password.
+            </p>
+          </div>
+        </div>
+
         <Card className="shadow-lg">
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl text-center">Welcome back</CardTitle>
@@ -71,7 +98,7 @@ export default function LoginPage() {
                 <Input
                   id="email"
                   type="email"
-                  placeholder="you@company.com"
+                  placeholder="demo@acme.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -87,7 +114,7 @@ export default function LoginPage() {
                 <Input
                   id="password"
                   type="password"
-                  placeholder="Enter your password"
+                  placeholder="demo123"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -108,6 +135,14 @@ export default function LoginPage() {
                 ) : (
                   'Sign in'
                 )}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={handleDemoLogin}
+              >
+                Fill Demo Credentials
               </Button>
               <p className="text-sm text-center text-slate-600">
                 Don&apos;t have an account?{' '}
