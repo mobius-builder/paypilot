@@ -192,6 +192,13 @@ export default function PayrollPage() {
   const [selectedPayroll, setSelectedPayroll] = useState<typeof initialPayrollRuns[0] | null>(null)
   const [payrollRuns, setPayrollRuns] = useState(initialPayrollRuns)
   const [isProcessing, setIsProcessing] = useState(false)
+  const [payStubDialogOpen, setPayStubDialogOpen] = useState(false)
+  const [selectedEmployee, setSelectedEmployee] = useState<typeof currentPayrollEmployees[0] | null>(null)
+
+  const handleViewPayStub = (employee: typeof currentPayrollEmployees[0]) => {
+    setSelectedEmployee(employee)
+    setPayStubDialogOpen(true)
+  }
 
   // Handle payroll approval with state machine validation
   const handleApprovePayroll = async () => {
@@ -382,7 +389,7 @@ export default function PayrollPage() {
                 </TableHeader>
                 <TableBody>
                   {currentPayrollEmployees.map((emp) => (
-                    <TableRow key={emp.id}>
+                    <TableRow key={emp.id} className="cursor-pointer hover:bg-slate-50" onClick={() => handleViewPayStub(emp)}>
                       <TableCell>
                         <div className="flex items-center gap-3">
                           <Avatar className="w-8 h-8">
@@ -513,6 +520,136 @@ export default function PayrollPage() {
                   Approve & Process
                 </>
               )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Pay Stub Dialog */}
+      <Dialog open={payStubDialogOpen} onOpenChange={setPayStubDialogOpen}>
+        <DialogContent className="sm:max-w-xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3">
+              <Avatar className="w-10 h-10">
+                <AvatarFallback className="bg-blue-100 text-blue-700">
+                  {selectedEmployee?.avatar}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <span>{selectedEmployee?.name}</span>
+                <p className="text-sm font-normal text-slate-500">{selectedEmployee?.department}</p>
+              </div>
+            </DialogTitle>
+            <DialogDescription>
+              Pay Stub for Feb 2-15, 2026
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            {/* Earnings Section */}
+            <div className="bg-slate-50 rounded-lg p-4">
+              <h4 className="font-semibold text-slate-900 mb-3">Earnings</h4>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-slate-600">Regular Pay ({selectedEmployee?.regularHours} hrs)</span>
+                  <span className="font-medium">${((selectedEmployee?.grossPay || 0) * 0.9).toLocaleString()}</span>
+                </div>
+                {(selectedEmployee?.overtimeHours || 0) > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-slate-600">Overtime Pay ({selectedEmployee?.overtimeHours} hrs @ 1.5x)</span>
+                    <span className="font-medium text-amber-600">${((selectedEmployee?.grossPay || 0) * 0.1).toLocaleString()}</span>
+                  </div>
+                )}
+                <div className="flex justify-between pt-2 border-t font-semibold">
+                  <span>Gross Pay</span>
+                  <span>${selectedEmployee?.grossPay.toLocaleString()}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Taxes Section */}
+            <div className="bg-red-50 rounded-lg p-4">
+              <h4 className="font-semibold text-red-900 mb-3">Tax Withholdings</h4>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-red-700">Federal Income Tax</span>
+                  <span className="font-medium text-red-600">-${Math.round((selectedEmployee?.taxes || 0) * 0.6).toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-red-700">State Income Tax</span>
+                  <span className="font-medium text-red-600">-${Math.round((selectedEmployee?.taxes || 0) * 0.2).toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-red-700">Social Security (6.2%)</span>
+                  <span className="font-medium text-red-600">-${Math.round((selectedEmployee?.taxes || 0) * 0.12).toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-red-700">Medicare (1.45%)</span>
+                  <span className="font-medium text-red-600">-${Math.round((selectedEmployee?.taxes || 0) * 0.08).toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between pt-2 border-t border-red-200 font-semibold text-red-700">
+                  <span>Total Taxes</span>
+                  <span>-${selectedEmployee?.taxes.toLocaleString()}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Deductions Section */}
+            <div className="bg-amber-50 rounded-lg p-4">
+              <h4 className="font-semibold text-amber-900 mb-3">Deductions</h4>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-amber-700">Health Insurance</span>
+                  <span className="font-medium text-amber-600">-${Math.round((selectedEmployee?.deductions || 0) * 0.5).toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-amber-700">401(k) Contribution (6%)</span>
+                  <span className="font-medium text-amber-600">-${Math.round((selectedEmployee?.deductions || 0) * 0.4).toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-amber-700">Dental & Vision</span>
+                  <span className="font-medium text-amber-600">-${Math.round((selectedEmployee?.deductions || 0) * 0.1).toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between pt-2 border-t border-amber-200 font-semibold text-amber-700">
+                  <span>Total Deductions</span>
+                  <span>-${selectedEmployee?.deductions.toLocaleString()}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Net Pay Section */}
+            <div className="bg-emerald-100 rounded-lg p-4">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h4 className="font-semibold text-emerald-900">Net Pay</h4>
+                  <p className="text-sm text-emerald-700">Direct deposit on Feb 20, 2026</p>
+                </div>
+                <span className="text-2xl font-bold text-emerald-700">${selectedEmployee?.netPay.toLocaleString()}</span>
+              </div>
+            </div>
+
+            {/* YTD Summary */}
+            <div className="grid grid-cols-3 gap-4 pt-4 border-t">
+              <div className="text-center">
+                <p className="text-sm text-slate-500">YTD Gross</p>
+                <p className="font-semibold text-slate-900">${((selectedEmployee?.grossPay || 0) * 4).toLocaleString()}</p>
+              </div>
+              <div className="text-center">
+                <p className="text-sm text-slate-500">YTD Taxes</p>
+                <p className="font-semibold text-red-600">${((selectedEmployee?.taxes || 0) * 4).toLocaleString()}</p>
+              </div>
+              <div className="text-center">
+                <p className="text-sm text-slate-500">YTD Net</p>
+                <p className="font-semibold text-emerald-600">${((selectedEmployee?.netPay || 0) * 4).toLocaleString()}</p>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPayStubDialogOpen(false)}>
+              Close
+            </Button>
+            <Button>
+              <Download className="w-4 h-4 mr-2" />
+              Download PDF
             </Button>
           </DialogFooter>
         </DialogContent>
