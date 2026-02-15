@@ -108,16 +108,17 @@ BEGIN
   )
   RETURNING id INTO v_conversation_id;
 
-  -- Add sample messages to the conversation
-  INSERT INTO messages (conversation_id, sender_type, content, content_type, is_read, created_at) VALUES
-  (v_conversation_id, 'agent', 'Hey! Quick check-in - how''s your week going so far?', 'text', true, now() - INTERVAL '3 hours'),
-  (v_conversation_id, 'employee', 'It''s been pretty busy actually. We''ve got a lot of deadlines coming up and I''m feeling a bit overwhelmed.', 'text', true, now() - INTERVAL '2 hours 30 minutes'),
-  (v_conversation_id, 'agent', 'Thanks for being honest about that. What''s been the biggest challenge with the workload?', 'text', true, now() - INTERVAL '2 hours 15 minutes'),
-  (v_conversation_id, 'employee', 'I think it''s the context switching. I''m on three different projects and it''s hard to make progress on any of them. My manager is supportive but there''s only so much they can do.', 'text', true, now() - INTERVAL '2 hours');
+  -- Add sample messages to the conversation (include company_id for RLS)
+  INSERT INTO messages (conversation_id, company_id, sender_type, content, content_type, is_read, created_at) VALUES
+  (v_conversation_id, v_company_id, 'agent', 'Hey! Quick check-in - how''s your week going so far?', 'text', true, now() - INTERVAL '3 hours'),
+  (v_conversation_id, v_company_id, 'employee', 'It''s been pretty busy actually. We''ve got a lot of deadlines coming up and I''m feeling a bit overwhelmed.', 'text', true, now() - INTERVAL '2 hours 30 minutes'),
+  (v_conversation_id, v_company_id, 'agent', 'Thanks for being honest about that. What''s been the biggest challenge with the workload?', 'text', true, now() - INTERVAL '2 hours 15 minutes'),
+  (v_conversation_id, v_company_id, 'employee', 'I think it''s the context switching. I''m on three different projects and it''s hard to make progress on any of them. My manager is supportive but there''s only so much they can do.', 'text', true, now() - INTERVAL '2 hours');
 
-  -- Create a feedback summary for this conversation
+  -- Create a feedback summary for this conversation (include company_id for RLS)
   INSERT INTO feedback_summaries (
     conversation_id,
+    company_id,
     summary,
     sentiment,
     sentiment_score,
@@ -127,6 +128,7 @@ BEGIN
     computed_at
   ) VALUES (
     v_conversation_id,
+    v_company_id,
     'Employee is feeling overwhelmed due to high workload and context switching across multiple projects. Manager relationship is positive but capacity issues persist.',
     'negative',
     -0.4,
