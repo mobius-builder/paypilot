@@ -98,8 +98,24 @@ export default function DashboardLayout({
   }, [])
 
   const handleSignOut = async () => {
+    // Call logout API to clear demo cookies
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' })
+    } catch {
+      // Continue even if API fails
+    }
+
+    // Clear Supabase session
     const supabase = createClient()
     await supabase.auth.signOut()
+
+    // Clear localStorage demo session
+    localStorage.removeItem('paypilot_demo_session')
+
+    // Clear demo cookies manually in case API failed
+    document.cookie = 'paypilot_demo_mode=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+    document.cookie = 'paypilot_demo_email=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+
     toast.success('Signed out successfully')
     router.push('/login')
     router.refresh()

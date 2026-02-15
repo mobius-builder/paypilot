@@ -7,15 +7,25 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { Loader2, Info } from 'lucide-react'
+import { Loader2, Info, Shield, User } from 'lucide-react'
 import { toast } from 'sonner'
 import { PayPilotLogo } from '@/components/logo'
 import { createClient } from '@/lib/supabase/client'
 
 // Demo credentials for easy testing
-const DEMO_CREDENTIALS = {
-  email: 'demo@paypilot.com',
-  password: 'demo123456'
+const DEMO_USERS = {
+  admin: {
+    email: 'demo@acme.com',
+    password: 'demo123',
+    name: 'Demo Admin',
+    role: 'owner',
+  },
+  employee: {
+    email: 'sarah.chen@acme.com',
+    password: 'demo123',
+    name: 'Sarah Chen',
+    role: 'member',
+  },
 }
 
 export default function LoginPage() {
@@ -23,6 +33,13 @@ export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+
+  const setDemoCookie = (email: string) => {
+    // Set demo mode cookies (expires in 24 hours)
+    const expires = new Date(Date.now() + 24 * 60 * 60 * 1000).toUTCString()
+    document.cookie = `paypilot_demo_mode=true; path=/; expires=${expires}`
+    document.cookie = `paypilot_demo_email=${email}; path=/; expires=${expires}`
+  }
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -37,21 +54,45 @@ export default function LoginPage() {
       })
 
       if (error) {
-        // If Supabase auth fails, check if it's demo credentials for fallback
-        if (email === DEMO_CREDENTIALS.email && password === DEMO_CREDENTIALS.password) {
-          // Demo mode fallback
+        // Check if it's one of our demo credentials
+        const adminCreds = DEMO_USERS.admin
+        const employeeCreds = DEMO_USERS.employee
+
+        if ((email === adminCreds.email || email === 'demo@paypilot.com') && (password === adminCreds.password || password === 'demo123456')) {
+          // Admin demo mode
+          setDemoCookie(adminCreds.email)
           localStorage.setItem('paypilot_demo_session', JSON.stringify({
             user: {
-              id: 'demo-user-001',
-              email: email,
-              name: 'Demo User',
-              role: 'company_admin',
-              company: 'Acme Technologies'
+              id: 'demo-admin-001',
+              email: adminCreds.email,
+              name: adminCreds.name,
+              role: adminCreds.role,
+              company: 'Acme Technologies',
+              isAdmin: true,
             },
             expiresAt: Date.now() + 24 * 60 * 60 * 1000
           }))
-          toast.success('Welcome back! (Demo Mode)')
+          toast.success(`Welcome, ${adminCreds.name}! (Admin Mode)`)
           router.push('/dashboard')
+          return
+        }
+
+        if (email === employeeCreds.email && password === employeeCreds.password) {
+          // Employee demo mode (Sarah Chen)
+          setDemoCookie(employeeCreds.email)
+          localStorage.setItem('paypilot_demo_session', JSON.stringify({
+            user: {
+              id: 'demo-employee-sarah',
+              email: employeeCreds.email,
+              name: employeeCreds.name,
+              role: employeeCreds.role,
+              company: 'Acme Technologies',
+              isAdmin: false,
+            },
+            expiresAt: Date.now() + 24 * 60 * 60 * 1000
+          }))
+          toast.success(`Welcome, ${employeeCreds.name}! (Employee Mode)`)
+          router.push('/messages') // Employees land on messages
           return
         }
 
@@ -71,9 +112,10 @@ export default function LoginPage() {
     }
   }
 
-  const handleDemoLogin = () => {
-    setEmail(DEMO_CREDENTIALS.email)
-    setPassword(DEMO_CREDENTIALS.password)
+  const handleDemoLogin = (type: 'admin' | 'employee') => {
+    const creds = DEMO_USERS[type]
+    setEmail(creds.email)
+    setPassword(creds.password)
   }
 
   return (
@@ -90,13 +132,39 @@ export default function LoginPage() {
         </div>
 
         {/* Demo notice */}
-        <div className="bg-accent border border-border rounded-lg p-4 mb-4 flex items-start gap-3">
-          <Info className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-          <div>
-            <p className="text-sm font-medium text-foreground">Try Demo Mode</p>
-            <p className="text-sm text-muted-foreground">
-              Use <button onClick={handleDemoLogin} className="font-mono underline text-primary">demo@paypilot.com</button> / <span className="font-mono">demo123456</span> to explore.
-            </p>
+        <div className="bg-accent border border-border rounded-lg p-4 mb-4">
+          <div className="flex items-start gap-3 mb-3">
+            <Info className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="text-sm font-medium text-foreground">Try Demo Mode</p>
+              <p className="text-sm text-muted-foreground">
+                Choose a role to explore PayPilot
+              </p>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => handleDemoLogin('admin')}
+              className="flex items-center gap-2 px-3 py-2 rounded-md border border-border bg-background hover:bg-secondary transition-colors text-sm"
+            >
+              <Shield className="w-4 h-4 text-primary" />
+              <div className="text-left">
+                <div className="font-medium">HR Admin</div>
+                <div className="text-xs text-muted-foreground">demo@acme.com</div>
+              </div>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleDemoLogin('employee')}
+              className="flex items-center gap-2 px-3 py-2 rounded-md border border-border bg-background hover:bg-secondary transition-colors text-sm"
+            >
+              <User className="w-4 h-4 text-green-500" />
+              <div className="text-left">
+                <div className="font-medium">Employee</div>
+                <div className="text-xs text-muted-foreground">sarah.chen@acme.com</div>
+              </div>
+            </button>
           </div>
         </div>
 
@@ -153,14 +221,6 @@ export default function LoginPage() {
                 ) : (
                   'Sign in'
                 )}
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full border-border hover:bg-secondary"
-                onClick={handleDemoLogin}
-              >
-                Fill Demo Credentials
               </Button>
               <p className="text-sm text-center text-muted-foreground">
                 Don&apos;t have an account?{' '}
