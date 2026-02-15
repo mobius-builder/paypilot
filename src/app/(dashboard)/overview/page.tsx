@@ -1,9 +1,11 @@
 'use client'
 
+import { useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { toast } from 'sonner'
 import {
   Users,
   DollarSign,
@@ -88,6 +90,17 @@ const CELEBRATIONS = [
 ]
 
 export default function OverviewPage() {
+  const [approvedItems, setApprovedItems] = useState<string[]>([])
+
+  const handleApprove = (id: string, name: string, type: string) => {
+    setApprovedItems((prev) => [...prev, id])
+    toast.success(`${type} approved!`, {
+      description: `${name}'s request has been approved and they've been notified.`,
+    })
+  }
+
+  const pendingApprovals = PENDING_APPROVALS.filter((item) => !approvedItems.includes(item.id))
+
   return (
     <div className="space-y-6">
       {/* Welcome header */}
@@ -262,28 +275,46 @@ export default function OverviewPage() {
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
               <CardTitle>Pending Approvals</CardTitle>
-              <CardDescription>{PENDING_APPROVALS.length} items need attention</CardDescription>
+              <CardDescription>
+                {pendingApprovals.length > 0
+                  ? `${pendingApprovals.length} items need attention`
+                  : 'All caught up!'}
+              </CardDescription>
             </div>
-            <Badge variant="secondary" className="bg-amber-100 text-amber-700">
-              <AlertCircle className="w-3 h-3 mr-1" />
-              {PENDING_APPROVALS.length}
-            </Badge>
+            {pendingApprovals.length > 0 && (
+              <Badge variant="secondary" className="bg-amber-100 text-amber-700">
+                <AlertCircle className="w-3 h-3 mr-1" />
+                {pendingApprovals.length}
+              </Badge>
+            )}
           </CardHeader>
           <CardContent className="space-y-3">
-            {PENDING_APPROVALS.slice(0, 4).map((item) => (
-              <div key={item.id} className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
-                <Avatar className="w-10 h-10">
-                  <AvatarFallback className="bg-accent text-primary text-sm">{item.avatar}</AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-slate-900 truncate">{item.name}</p>
-                  <p className="text-sm text-slate-500">{item.type} - {item.details}</p>
-                </div>
-                <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700">
-                  Approve
-                </Button>
+            {pendingApprovals.length === 0 ? (
+              <div className="text-center py-6 text-slate-500">
+                <CheckCircle2 className="w-10 h-10 mx-auto mb-2 text-emerald-500" />
+                <p className="font-medium">All approvals complete!</p>
+                <p className="text-sm">Great job staying on top of requests.</p>
               </div>
-            ))}
+            ) : (
+              pendingApprovals.slice(0, 4).map((item) => (
+                <div key={item.id} className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
+                  <Avatar className="w-10 h-10">
+                    <AvatarFallback className="bg-accent text-primary text-sm">{item.avatar}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-slate-900 truncate">{item.name}</p>
+                    <p className="text-sm text-slate-500">{item.type} - {item.details}</p>
+                  </div>
+                  <Button
+                    size="sm"
+                    className="bg-emerald-600 hover:bg-emerald-700"
+                    onClick={() => handleApprove(item.id, item.name, item.type)}
+                  >
+                    Approve
+                  </Button>
+                </div>
+              ))
+            )}
           </CardContent>
         </Card>
       </div>
