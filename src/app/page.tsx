@@ -248,149 +248,7 @@ const bentoItems = [
   }
 ]
 
-// Visual illustrations for bento boxes - using only site palette
-function BentoVisual({ type }: { type: string; size?: string }) {
-  if (type === "payroll") {
-    return (
-      <div className="absolute right-4 bottom-4 opacity-90">
-        <div className="relative">
-          {/* Floating pay stub illustration */}
-          <div className="flex items-end gap-2">
-            <motion.div
-              className="w-16 h-20 bg-card rounded-lg border border-border p-2"
-              initial={{ y: 10, opacity: 0 }}
-              whileInView={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.2 }}
-            >
-              <div className="h-2 w-8 bg-primary/20 rounded mb-1" />
-              <div className="h-1.5 w-10 bg-secondary rounded mb-1" />
-              <div className="h-1.5 w-6 bg-secondary rounded mb-3" />
-              <div className="h-3 w-full bg-accent rounded flex items-center justify-end pr-1">
-                <span className="text-[6px] text-primary font-bold">$12,450</span>
-              </div>
-            </motion.div>
-            <motion.div
-              className="w-12 h-14 bg-accent rounded-lg border border-border flex items-center justify-center"
-              initial={{ y: 20, opacity: 0 }}
-              whileInView={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.3 }}
-            >
-              <Check className="w-6 h-6 text-primary" />
-            </motion.div>
-          </div>
-          {/* Decorative circles */}
-          <div className="absolute -top-4 -right-4 w-8 h-8 rounded-full bg-primary/10" />
-          <div className="absolute -bottom-2 -left-2 w-4 h-4 rounded-full bg-accent" />
-        </div>
-      </div>
-    )
-  }
-
-  if (type === "employees") {
-    return (
-      <div className="absolute right-3 bottom-3 flex -space-x-2">
-        {[0, 1, 2].map((i) => (
-          <motion.div
-            key={i}
-            className="w-8 h-8 rounded-full bg-primary border-2 border-card flex items-center justify-center"
-            initial={{ scale: 0 }}
-            whileInView={{ scale: 1 }}
-            transition={{ delay: 0.1 * i }}
-          >
-            <span className="text-primary-foreground text-[10px] font-medium">{['JD', 'SK', 'MR'][i]}</span>
-          </motion.div>
-        ))}
-        <motion.div
-          className="w-8 h-8 rounded-full bg-accent border-2 border-card flex items-center justify-center"
-          initial={{ scale: 0 }}
-          whileInView={{ scale: 1 }}
-          transition={{ delay: 0.3 }}
-        >
-          <span className="text-primary text-[10px] font-medium">+47</span>
-        </motion.div>
-      </div>
-    )
-  }
-
-  if (type === "time") {
-    return (
-      <div className="absolute right-3 bottom-3">
-        <motion.div
-          className="w-14 h-14 rounded-full border-4 border-secondary bg-card flex items-center justify-center relative"
-          initial={{ rotate: -30, opacity: 0 }}
-          whileInView={{ rotate: 0, opacity: 1 }}
-          transition={{ delay: 0.2 }}
-        >
-          <div className="absolute w-0.5 h-4 bg-primary rounded-full origin-bottom" style={{ transform: 'rotate(-30deg)' }} />
-          <div className="absolute w-0.5 h-3 bg-muted-foreground rounded-full origin-bottom" style={{ transform: 'rotate(60deg)' }} />
-          <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-        </motion.div>
-      </div>
-    )
-  }
-
-  if (type === "benefits") {
-    return (
-      <div className="absolute right-4 bottom-4">
-        <div className="flex gap-2">
-          {[
-            { icon: "❤️" },
-            { icon: "🦷" },
-            { icon: "👁️" },
-          ].map((item, i) => (
-            <motion.div
-              key={i}
-              className="w-10 h-10 rounded-lg bg-secondary border border-border flex items-center justify-center text-sm"
-              initial={{ y: 10, opacity: 0 }}
-              whileInView={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.1 * i }}
-            >
-              {item.icon}
-            </motion.div>
-          ))}
-        </div>
-      </div>
-    )
-  }
-
-  if (type === "ai") {
-    return (
-      <div className="absolute right-3 bottom-3">
-        <motion.div
-          className="flex flex-col gap-1"
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-        >
-          <div className="flex gap-1">
-            <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-            <div className="w-1.5 h-1.5 rounded-full bg-primary/70 animate-pulse" style={{ animationDelay: '0.2s' }} />
-            <div className="w-1.5 h-1.5 rounded-full bg-primary/40 animate-pulse" style={{ animationDelay: '0.4s' }} />
-          </div>
-        </motion.div>
-      </div>
-    )
-  }
-
-  if (type === "analytics") {
-    return (
-      <div className="absolute right-3 bottom-3 flex items-end gap-1">
-        {[40, 65, 45, 80, 55].map((h, i) => (
-          <motion.div
-            key={i}
-            className="w-2 bg-primary rounded-t"
-            style={{ height: `${h * 0.4}px`, opacity: 0.4 + (i * 0.15) }}
-            initial={{ scaleY: 0 }}
-            whileInView={{ scaleY: 1 }}
-            transition={{ delay: 0.1 * i }}
-          />
-        ))}
-      </div>
-    )
-  }
-
-  return null
-}
+// No visual illustrations - clean card design
 
 export default function LandingPage() {
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null)
@@ -543,10 +401,10 @@ export default function LandingPage() {
                   viewport={{ once: true }}
                   transition={{ delay: index * 0.08 }}
                 >
-                  <Card className="h-full min-h-[200px] overflow-hidden bg-card border border-border hover:border-primary/30 transition-all duration-300">
-                    <div className="relative h-full p-6 flex flex-col">
+                  <Card className="h-full min-h-[180px] overflow-hidden bg-card border border-border hover:border-primary/30 transition-all duration-300">
+                    <div className="h-full p-6 flex flex-col">
                       {/* Icon */}
-                      <div className="w-10 h-10 rounded-lg bg-accent border border-border flex items-center justify-center mb-4 group-hover:scale-105 transition-transform duration-300">
+                      <div className="w-10 h-10 rounded-lg bg-accent border border-border flex items-center justify-center mb-4 flex-shrink-0 group-hover:scale-105 transition-transform duration-300">
                         <item.icon className="w-5 h-5 text-primary" />
                       </div>
 
@@ -554,12 +412,9 @@ export default function LandingPage() {
                       <h3 className="font-semibold text-foreground mb-2 text-base">
                         {item.title}
                       </h3>
-                      <p className="text-muted-foreground leading-relaxed text-sm">
+                      <p className="text-muted-foreground leading-relaxed text-sm flex-grow">
                         {item.description}
                       </p>
-
-                      {/* Visual illustration */}
-                      <BentoVisual type={item.visual} />
                     </div>
                   </Card>
                 </motion.div>
