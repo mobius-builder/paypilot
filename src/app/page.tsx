@@ -400,7 +400,7 @@ export default function LandingPage() {
       {/* Dashboard Preview */}
       <section className="px-4 pb-20">
         <div className="max-w-6xl mx-auto">
-          <div className="bg-gradient-to-b from-slate-900 to-slate-800 rounded-2xl p-2 shadow-2xl">
+          <div className="bg-gradient-to-b from-slate-900 to-slate-800 rounded-2xl p-2 shadow-2xl animate-float">
             <div className="bg-white rounded-xl overflow-hidden">
               <div className="bg-slate-100 px-4 py-2 flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-red-400" />
