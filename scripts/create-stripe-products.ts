@@ -3,7 +3,7 @@
 
 import Stripe from 'stripe'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'REDACTED_STRIPE_KEY')
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 
 async function createProducts() {
   console.log('Creating Stripe products and prices...\n')
