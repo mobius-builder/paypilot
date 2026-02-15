@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -8,6 +9,14 @@ import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Separator } from '@/components/ui/separator'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import {
   ArrowLeft,
   Mail,
@@ -21,16 +30,56 @@ import {
   Shield,
   FileText,
   Edit,
-  MoreHorizontal
+  MoreHorizontal,
+  UserCheck,
+  UserMinus,
+  Palmtree,
+  AlertTriangle
 } from 'lucide-react'
+import { toast } from 'sonner'
 import { demoEmployees } from '@/lib/demo-data'
+import { canTransitionEmployee, getEmployeeNextStates, type EmployeeStatus } from '@/lib/state-machines'
 
 export default function EmployeeDetailPage() {
   const params = useParams()
   const employeeId = params.id as string
 
   // Find employee from demo data (in production, fetch from API)
-  const employee = demoEmployees.find(e => e.id === employeeId) || demoEmployees[0]
+  const initialEmployee = demoEmployees.find(e => e.id === employeeId) || demoEmployees[0]
+  const [employee, setEmployee] = useState({
+    ...initialEmployee,
+    status: initialEmployee.status as EmployeeStatus
+  })
+
+  // Handle status change with state machine validation
+  const handleStatusChange = (targetStatus: EmployeeStatus) => {
+    const result = canTransitionEmployee(employee.status, targetStatus, {
+      employeeId: employee.id,
+      actorRole: 'admin',
+      hasCompletedOnboarding: true, // Assume true for demo
+      terminationReason: targetStatus === 'terminated' ? 'Voluntary resignation' : undefined,
+    })
+
+    if (!result.allowed) {
+      toast.error(`Cannot change status: ${result.reason}`)
+      return
+    }
+
+    setEmployee(prev => ({ ...prev, status: targetStatus }))
+
+    const statusLabels: Record<EmployeeStatus, string> = {
+      invited: 'Invited',
+      onboarding: 'Onboarding',
+      active: 'Active',
+      on_leave: 'On Leave',
+      terminated: 'Terminated'
+    }
+
+    toast.success(`${employee.name} is now ${statusLabels[targetStatus]}`)
+  }
+
+  // Get available transitions for current status
+  const availableTransitions = getEmployeeNextStates(employee.status)
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -40,8 +89,44 @@ export default function EmployeeDetailPage() {
         return <Badge className="bg-blue-100 text-blue-700">Onboarding</Badge>
       case 'on_leave':
         return <Badge className="bg-amber-100 text-amber-700">On Leave</Badge>
+      case 'terminated':
+        return <Badge className="bg-red-100 text-red-700">Terminated</Badge>
+      case 'invited':
+        return <Badge className="bg-slate-100 text-slate-700">Invited</Badge>
       default:
         return <Badge variant="secondary">{status}</Badge>
+    }
+  }
+
+  const getTransitionIcon = (trigger: string) => {
+    switch (trigger) {
+      case 'COMPLETE_ONBOARDING':
+        return <UserCheck className="w-4 h-4 mr-2" />
+      case 'START_LEAVE':
+        return <Palmtree className="w-4 h-4 mr-2" />
+      case 'END_LEAVE':
+        return <UserCheck className="w-4 h-4 mr-2" />
+      case 'TERMINATE':
+        return <UserMinus className="w-4 h-4 mr-2" />
+      default:
+        return null
+    }
+  }
+
+  const getTransitionLabel = (trigger: string) => {
+    switch (trigger) {
+      case 'ACCEPT_INVITE':
+        return 'Accept Invite'
+      case 'COMPLETE_ONBOARDING':
+        return 'Complete Onboarding'
+      case 'START_LEAVE':
+        return 'Start Leave'
+      case 'END_LEAVE':
+        return 'Return from Leave'
+      case 'TERMINATE':
+        return 'Terminate Employee'
+      default:
+        return trigger
     }
   }
 
@@ -77,10 +162,34 @@ export default function EmployeeDetailPage() {
             <Mail className="w-4 h-4 mr-2" />
             Send Email
           </Button>
-          <Button>
+          <Button variant="outline">
             <Edit className="w-4 h-4 mr-2" />
             Edit Profile
           </Button>
+          {availableTransitions.length > 0 && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline">
+                  <MoreHorizontal className="w-4 h-4 mr-2" />
+                  Actions
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>Change Status</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {availableTransitions.map((transition) => (
+                  <DropdownMenuItem
+                    key={transition.trigger}
+                    onClick={() => handleStatusChange(transition.to)}
+                    className={transition.to === 'terminated' ? 'text-red-600' : ''}
+                  >
+                    {getTransitionIcon(transition.trigger)}
+                    {getTransitionLabel(transition.trigger)}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
       </div>
 
