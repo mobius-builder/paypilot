@@ -324,21 +324,31 @@ export default function LandingPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           plan: planId,
-          email: '', // Will be collected on signup page
+          // Email will be collected by Stripe checkout
         })
       })
 
       const data = await response.json()
+
+      if (data.error) {
+        console.error('Checkout API error:', data.error)
+        // Fallback to signup page on error
+        window.location.href = `/signup?plan=${planId}`
+        return
+      }
+
       if (data.url) {
         window.location.href = data.url
+      } else {
+        // No URL returned, go to signup
+        window.location.href = `/signup?plan=${planId}`
       }
     } catch (error) {
       console.error('Checkout error:', error)
       // Fallback to signup page
       window.location.href = `/signup?plan=${planId}`
-    } finally {
-      setCheckoutLoading(null)
     }
+    // Don't reset loading since we're navigating away
   }
 
   return (

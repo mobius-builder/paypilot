@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 
-const stripe = process.env.STRIPE_SECRET_KEY
-  ? new Stripe(process.env.STRIPE_SECRET_KEY)
-  : null
+// Initialize Stripe lazily with trimmed key
+function getStripe(): Stripe | null {
+  const key = process.env.STRIPE_SECRET_KEY?.trim()
+  if (!key) return null
+  return new Stripe(key, { typescript: true })
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -15,6 +18,8 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       )
     }
+
+    const stripe = getStripe()
 
     // If no Stripe key, return demo response
     if (!stripe) {

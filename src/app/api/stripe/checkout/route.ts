@@ -24,10 +24,10 @@ export async function POST(req: NextRequest) {
   try {
     const { plan, email, companyName } = await req.json()
 
-    // Validate required fields
-    if (!plan || !email) {
+    // Validate required fields - email is optional (Stripe will collect it)
+    if (!plan) {
       return NextResponse.json(
-        { error: 'Plan and email are required' },
+        { error: 'Plan is required' },
         { status: 400 }
       )
     }
@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
     console.log('Creating checkout session with priceId:', priceId)
 
     // Create Stripe Checkout Session
-    const session = await stripe.checkout.sessions.create({
+    const sessionConfig: Stripe.Checkout.SessionCreateParams = {
       mode: 'subscription',
       payment_method_types: ['card'],
       line_items: [
@@ -66,7 +66,6 @@ export async function POST(req: NextRequest) {
           quantity: 1
         }
       ],
-      customer_email: email,
       metadata: {
         company_name: companyName || '',
         plan: plan
@@ -80,7 +79,14 @@ export async function POST(req: NextRequest) {
           plan: plan
         }
       }
-    })
+    }
+
+    // Only add customer_email if provided
+    if (email) {
+      sessionConfig.customer_email = email
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionConfig)
 
     return NextResponse.json({
       url: session.url,
