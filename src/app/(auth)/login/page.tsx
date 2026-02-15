@@ -7,8 +7,9 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { Sparkles, Loader2, Info } from 'lucide-react'
+import { Loader2, Info } from 'lucide-react'
 import { toast } from 'sonner'
+import { PayPilotLogo } from '@/components/logo'
 
 // Demo mode - works without Supabase
 const DEMO_CREDENTIALS = {
@@ -60,31 +61,30 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white flex items-center justify-center px-4">
+    <div className="min-h-screen bg-background flex items-center justify-center px-4">
       <div className="w-full max-w-md">
+        {/* Logo */}
         <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center gap-2">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
-              <Sparkles className="w-6 h-6 text-white" />
-            </div>
-            <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 text-transparent bg-clip-text">
+          <Link href="/" className="inline-flex items-center gap-3">
+            <PayPilotLogo className="w-10 h-10" />
+            <span className="text-2xl font-bold text-foreground">
               PayPilot
             </span>
           </Link>
         </div>
 
         {/* Demo notice */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 flex items-start gap-3">
-          <Info className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+        <div className="bg-accent border border-border rounded-lg p-4 mb-4 flex items-start gap-3">
+          <Info className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
           <div>
-            <p className="text-sm font-medium text-blue-900">Demo Mode</p>
-            <p className="text-sm text-blue-700">
-              Use <button onClick={handleDemoLogin} className="font-mono underline">demo@acme.com</button> / <span className="font-mono">demo123</span> or any email with 4+ char password.
+            <p className="text-sm font-medium text-foreground">Demo Mode</p>
+            <p className="text-sm text-muted-foreground">
+              Use <button onClick={handleDemoLogin} className="font-mono underline text-primary">demo@acme.com</button> / <span className="font-mono">demo123</span> or any email with 4+ char password.
             </p>
           </div>
         </div>
 
-        <Card className="shadow-lg">
+        <Card className="border border-border">
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl text-center">Welcome back</CardTitle>
             <CardDescription className="text-center">
@@ -102,12 +102,13 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
+                  className="border-border focus:ring-primary"
                 />
               </div>
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password">Password</Label>
-                  <Link href="/forgot-password" className="text-sm text-blue-600 hover:underline">
+                  <Link href="/forgot-password" className="text-sm text-primary hover:underline">
                     Forgot password?
                   </Link>
                 </div>
@@ -118,13 +119,14 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
+                  className="border-border focus:ring-primary"
                 />
               </div>
             </CardContent>
             <CardFooter className="flex flex-col gap-4">
               <Button
                 type="submit"
-                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
                 disabled={loading}
               >
                 {loading ? (
@@ -139,14 +141,14 @@ export default function LoginPage() {
               <Button
                 type="button"
                 variant="outline"
-                className="w-full"
+                className="w-full border-border hover:bg-secondary"
                 onClick={handleDemoLogin}
               >
                 Fill Demo Credentials
               </Button>
-              <p className="text-sm text-center text-slate-600">
+              <p className="text-sm text-center text-muted-foreground">
                 Don&apos;t have an account?{' '}
-                <Link href="/signup" className="text-blue-600 hover:underline font-medium">
+                <Link href="/signup" className="text-primary hover:underline font-medium">
                   Sign up
                 </Link>
               </p>
@@ -154,11 +156,11 @@ export default function LoginPage() {
           </form>
         </Card>
 
-        <p className="text-center text-sm text-slate-500 mt-6">
+        <p className="text-center text-sm text-muted-foreground mt-6">
           By signing in, you agree to our{' '}
-          <Link href="/terms" className="underline hover:text-slate-700">Terms of Service</Link>
+          <Link href="/terms" className="underline hover:text-foreground">Terms of Service</Link>
           {' '}and{' '}
-          <Link href="/privacy" className="underline hover:text-slate-700">Privacy Policy</Link>
+          <Link href="/privacy" className="underline hover:text-foreground">Privacy Policy</Link>
         </p>
       </div>
     </div>

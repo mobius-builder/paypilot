@@ -7,8 +7,9 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { Sparkles, Loader2, Building2, Info, CheckCircle2, PartyPopper } from 'lucide-react'
+import { Loader2, Building2, Info, CheckCircle2, PartyPopper } from 'lucide-react'
 import { toast } from 'sonner'
+import { PayPilotLogo } from '@/components/logo'
 
 function SignupContent() {
   const router = useRouter()
@@ -95,40 +96,40 @@ function SignupContent() {
   // Show success screen after Stripe checkout
   if (showSuccess) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white flex items-center justify-center px-4 py-8">
+      <div className="min-h-screen bg-background flex items-center justify-center px-4 py-8">
         <div className="w-full max-w-md text-center">
           <div className="mb-8">
-            <div className="w-20 h-20 bg-gradient-to-br from-emerald-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-6 animate-bounce">
-              <CheckCircle2 className="w-10 h-10 text-white" />
+            <div className="w-20 h-20 bg-primary rounded-full flex items-center justify-center mx-auto mb-6 animate-bounce">
+              <CheckCircle2 className="w-10 h-10 text-primary-foreground" />
             </div>
-            <h1 className="text-3xl font-bold text-slate-900 mb-2">
+            <h1 className="text-3xl font-bold text-foreground mb-2">
               Welcome to PayPilot! <PartyPopper className="inline w-8 h-8" />
             </h1>
-            <p className="text-lg text-slate-600">
+            <p className="text-lg text-muted-foreground">
               Your 14-day trial has started
             </p>
           </div>
 
-          <Card className="shadow-lg mb-6">
+          <Card className="border border-border mb-6">
             <CardContent className="p-6">
               <div className="space-y-4">
-                <div className="flex items-center justify-between p-3 bg-emerald-50 rounded-lg">
-                  <span className="text-emerald-700 font-medium">Payment confirmed</span>
-                  <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                <div className="flex items-center justify-between p-3 bg-accent rounded-lg">
+                  <span className="text-primary font-medium">Payment confirmed</span>
+                  <CheckCircle2 className="w-5 h-5 text-primary" />
                 </div>
-                <div className="flex items-center justify-between p-3 bg-emerald-50 rounded-lg">
-                  <span className="text-emerald-700 font-medium">Account created</span>
-                  <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                <div className="flex items-center justify-between p-3 bg-accent rounded-lg">
+                  <span className="text-primary font-medium">Account created</span>
+                  <CheckCircle2 className="w-5 h-5 text-primary" />
                 </div>
-                <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
-                  <span className="text-blue-700 font-medium">Setting up your workspace...</span>
-                  <Loader2 className="w-5 h-5 text-blue-600 animate-spin" />
+                <div className="flex items-center justify-between p-3 bg-secondary rounded-lg">
+                  <span className="text-foreground font-medium">Setting up your workspace...</span>
+                  <Loader2 className="w-5 h-5 text-primary animate-spin" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <p className="text-slate-500">
+          <p className="text-muted-foreground">
             Redirecting to your dashboard...
           </p>
         </div>
@@ -137,32 +138,31 @@ function SignupContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white flex items-center justify-center px-4 py-8">
+    <div className="min-h-screen bg-background flex items-center justify-center px-4 py-8">
       <div className="w-full max-w-md">
+        {/* Logo */}
         <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center gap-2">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
-              <Sparkles className="w-6 h-6 text-white" />
-            </div>
-            <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 text-transparent bg-clip-text">
+          <Link href="/" className="inline-flex items-center gap-3">
+            <PayPilotLogo className="w-10 h-10" />
+            <span className="text-2xl font-bold text-foreground">
               PayPilot
             </span>
           </Link>
         </div>
 
         {/* Demo notice */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 flex items-start gap-3">
-          <Info className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+        <div className="bg-accent border border-border rounded-lg p-4 mb-4 flex items-start gap-3">
+          <Info className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
           <div>
-            <p className="text-sm font-medium text-blue-900">Demo Mode</p>
-            <p className="text-sm text-blue-700">
+            <p className="text-sm font-medium text-foreground">Demo Mode</p>
+            <p className="text-sm text-muted-foreground">
               This is a demo. Your data won&apos;t be saved permanently. Or{' '}
-              <Link href="/login" className="underline font-medium">login with demo credentials</Link>.
+              <Link href="/login" className="underline font-medium text-primary">login with demo credentials</Link>.
             </p>
           </div>
         </div>
 
-        <Card className="shadow-lg">
+        <Card className="border border-border">
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl text-center">
               {step === 1 ? 'Create your account' : 'Tell us about your company'}
@@ -174,8 +174,8 @@ function SignupContent() {
             </CardDescription>
             {/* Progress indicator */}
             <div className="flex justify-center gap-2 pt-4">
-              <div className={`w-16 h-1 rounded-full ${step >= 1 ? 'bg-blue-600' : 'bg-slate-200'}`} />
-              <div className={`w-16 h-1 rounded-full ${step >= 2 ? 'bg-blue-600' : 'bg-slate-200'}`} />
+              <div className={`w-16 h-1 rounded-full ${step >= 1 ? 'bg-primary' : 'bg-secondary'}`} />
+              <div className={`w-16 h-1 rounded-full ${step >= 2 ? 'bg-primary' : 'bg-secondary'}`} />
             </div>
           </CardHeader>
           <form onSubmit={handleSignup}>
@@ -191,6 +191,7 @@ function SignupContent() {
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
                       required
+                      className="border-border focus:ring-primary"
                     />
                   </div>
                   <div className="space-y-2">
@@ -202,6 +203,7 @@ function SignupContent() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
+                      className="border-border focus:ring-primary"
                     />
                   </div>
                   <div className="space-y-2">
@@ -214,8 +216,9 @@ function SignupContent() {
                       onChange={(e) => setPassword(e.target.value)}
                       minLength={6}
                       required
+                      className="border-border focus:ring-primary"
                     />
-                    <p className="text-xs text-slate-500">Must be at least 6 characters</p>
+                    <p className="text-xs text-muted-foreground">Must be at least 6 characters</p>
                   </div>
                 </>
               ) : (
@@ -223,11 +226,11 @@ function SignupContent() {
                   <div className="space-y-2">
                     <Label htmlFor="companyName">Company Name</Label>
                     <div className="relative">
-                      <Building2 className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
+                      <Building2 className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                       <Input
                         id="companyName"
                         type="text"
-                        className="pl-10"
+                        className="pl-10 border-border focus:ring-primary"
                         placeholder="Acme Inc."
                         value={companyName}
                         onChange={(e) => setCompanyName(e.target.value)}
@@ -245,8 +248,8 @@ function SignupContent() {
                           onClick={() => setCompanySize(size)}
                           className={`p-3 border rounded-lg text-sm font-medium transition-all ${
                             companySize === size
-                              ? 'border-blue-600 bg-blue-50 text-blue-700'
-                              : 'border-slate-200 hover:border-slate-300 text-slate-700'
+                              ? 'border-primary bg-accent text-primary'
+                              : 'border-border hover:border-primary/50 text-foreground'
                           }`}
                         >
                           {size} employees
@@ -264,14 +267,14 @@ function SignupContent() {
                     type="button"
                     variant="outline"
                     onClick={() => setStep(1)}
-                    className="flex-1"
+                    className="flex-1 border-border hover:bg-secondary"
                   >
                     Back
                   </Button>
                 )}
                 <Button
                   type="submit"
-                  className={`bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 ${step === 1 ? 'w-full' : 'flex-1'}`}
+                  className={`bg-primary text-primary-foreground hover:bg-primary/90 ${step === 1 ? 'w-full' : 'flex-1'}`}
                   disabled={loading || (step === 2 && !companySize)}
                 >
                   {loading ? (
@@ -286,9 +289,9 @@ function SignupContent() {
                   )}
                 </Button>
               </div>
-              <p className="text-sm text-center text-slate-600">
+              <p className="text-sm text-center text-muted-foreground">
                 Already have an account?{' '}
-                <Link href="/login" className="text-blue-600 hover:underline font-medium">
+                <Link href="/login" className="text-primary hover:underline font-medium">
                   Sign in
                 </Link>
               </p>
@@ -296,11 +299,11 @@ function SignupContent() {
           </form>
         </Card>
 
-        <p className="text-center text-sm text-slate-500 mt-6">
+        <p className="text-center text-sm text-muted-foreground mt-6">
           By signing up, you agree to our{' '}
-          <Link href="/terms" className="underline hover:text-slate-700">Terms of Service</Link>
+          <Link href="/terms" className="underline hover:text-foreground">Terms of Service</Link>
           {' '}and{' '}
-          <Link href="/privacy" className="underline hover:text-slate-700">Privacy Policy</Link>
+          <Link href="/privacy" className="underline hover:text-foreground">Privacy Policy</Link>
         </p>
       </div>
     </div>
@@ -311,8 +314,8 @@ function SignupContent() {
 export default function SignupPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     }>
       <SignupContent />
