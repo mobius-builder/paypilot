@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -14,9 +15,11 @@ import {
   ChevronRight,
   Sparkles,
   ArrowUpRight,
-  ArrowDownRight
+  ArrowDownRight,
+  CheckCircle2
 } from 'lucide-react'
 import Link from 'next/link'
+import { toast } from 'sonner'
 
 // Demo data
 const stats = [
@@ -73,13 +76,40 @@ const upcomingPayroll = {
   netPay: 74911,
 }
 
-const pendingApprovals = [
+const initialPendingApprovals = [
   { id: 1, name: 'Sarah Chen', type: 'PTO Request', details: 'Feb 24-26 (3 days)', avatar: 'SC' },
   { id: 2, name: 'Tom Wilson', type: 'PTO Request', details: 'Mar 3-7 (5 days)', avatar: 'TW' },
   { id: 3, name: 'Lisa Park', type: 'Expense Report', details: '$342.50', avatar: 'LP' },
 ]
 
 export default function DashboardPage() {
+  const [pendingApprovals, setPendingApprovals] = useState(initialPendingApprovals)
+  const [processingId, setProcessingId] = useState<number | null>(null)
+
+  const handleApprove = async (id: number) => {
+    setProcessingId(id)
+    const item = pendingApprovals.find(a => a.id === id)
+
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 500))
+
+    setPendingApprovals(prev => prev.filter(a => a.id !== id))
+    setProcessingId(null)
+    toast.success(`${item?.type} for ${item?.name} approved!`)
+  }
+
+  const handleDeny = async (id: number) => {
+    setProcessingId(id)
+    const item = pendingApprovals.find(a => a.id === id)
+
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 500))
+
+    setPendingApprovals(prev => prev.filter(a => a.id !== id))
+    setProcessingId(null)
+    toast.error(`${item?.type} for ${item?.name} denied`)
+  }
+
   return (
     <div className="space-y-6">
       {/* Welcome header */}
@@ -195,33 +225,58 @@ export default function DashboardPage() {
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
               <CardTitle>Pending Approvals</CardTitle>
-              <CardDescription>{pendingApprovals.length} items need attention</CardDescription>
+              <CardDescription>
+                {pendingApprovals.length === 0
+                  ? 'All items processed'
+                  : `${pendingApprovals.length} item${pendingApprovals.length !== 1 ? 's' : ''} need${pendingApprovals.length === 1 ? 's' : ''} attention`}
+              </CardDescription>
             </div>
-            <Badge variant="secondary" className="bg-amber-100 text-amber-700">
-              <AlertCircle className="w-3 h-3 mr-1" />
-              {pendingApprovals.length}
-            </Badge>
+            {pendingApprovals.length > 0 && (
+              <Badge variant="secondary" className="bg-amber-100 text-amber-700">
+                <AlertCircle className="w-3 h-3 mr-1" />
+                {pendingApprovals.length}
+              </Badge>
+            )}
           </CardHeader>
           <CardContent className="space-y-4">
-            {pendingApprovals.map((item) => (
-              <div key={item.id} className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
-                <Avatar className="w-10 h-10">
-                  <AvatarFallback className="bg-blue-100 text-blue-700 text-sm">{item.avatar}</AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-slate-900 truncate">{item.name}</p>
-                  <p className="text-sm text-slate-500">{item.type} - {item.details}</p>
-                </div>
-                <div className="flex gap-1">
-                  <Button size="sm" variant="ghost" className="text-red-600 hover:text-red-700 hover:bg-red-50">
-                    Deny
-                  </Button>
-                  <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700">
-                    Approve
-                  </Button>
-                </div>
+            {pendingApprovals.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-8 text-center">
+                <CheckCircle2 className="w-12 h-12 text-emerald-500 mb-3" />
+                <p className="font-medium text-slate-900">All caught up!</p>
+                <p className="text-sm text-slate-500">No pending approvals</p>
               </div>
-            ))}
+            ) : (
+              pendingApprovals.map((item) => (
+                <div key={item.id} className={`flex items-center gap-3 p-3 bg-slate-50 rounded-lg transition-opacity ${processingId === item.id ? 'opacity-50' : ''}`}>
+                  <Avatar className="w-10 h-10">
+                    <AvatarFallback className="bg-blue-100 text-blue-700 text-sm">{item.avatar}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-slate-900 truncate">{item.name}</p>
+                    <p className="text-sm text-slate-500">{item.type} - {item.details}</p>
+                  </div>
+                  <div className="flex gap-1">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      onClick={() => handleDeny(item.id)}
+                      disabled={processingId !== null}
+                    >
+                      Deny
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="bg-emerald-600 hover:bg-emerald-700"
+                      onClick={() => handleApprove(item.id)}
+                      disabled={processingId !== null}
+                    >
+                      {processingId === item.id ? 'Processing...' : 'Approve'}
+                    </Button>
+                  </div>
+                </div>
+              ))
+            )}
           </CardContent>
         </Card>
       </div>
