@@ -35,40 +35,25 @@ const suggestedQuestions = [
   { icon: Calendar, text: "Who is on leave this week?", category: "Team" },
 ]
 
-// Simulated AI responses based on question keywords
-const getAIResponse = (question: string): string => {
-  const q = question.toLowerCase()
+// Call the AI API endpoint
+const callAIApi = async (message: string, history: Array<{ role: string; content: string }>): Promise<string> => {
+  const response = await fetch('/api/chat', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      message,
+      conversationHistory: history.slice(-10) // Keep last 10 messages for context
+    }),
+  })
 
-  if (q.includes('pto') || q.includes('vacation') || q.includes('time off') || q.includes('days off')) {
-    return `Based on your records, you have **96 hours (12 days)** of PTO remaining for 2026.\n\nHere's your breakdown:\n- Annual PTO allowance: 120 hours (15 days)\n- Used this year: 24 hours (3 days)\n- Remaining: 96 hours (12 days)\n\nYou also have **32 hours (4 days)** of sick leave available.\n\nWould you like to submit a time off request?`
+  if (!response.ok) {
+    throw new Error('Failed to get AI response')
   }
 
-  if (q.includes('payday') || q.includes('pay date') || q.includes('next payroll') || q.includes('when do i get paid')) {
-    return `The next payday is **February 20, 2026**.\n\nAcme Technologies runs payroll on a biweekly schedule. Here are the upcoming pay dates:\n- Feb 20, 2026 (for Feb 2-15 pay period)\n- Mar 6, 2026 (for Feb 16 - Mar 1 pay period)\n- Mar 20, 2026 (for Mar 2-15 pay period)\n\nPayments are typically deposited by 9 AM on pay day.`
-  }
-
-  if (q.includes('health insurance') || q.includes('medical') || q.includes('health plan')) {
-    return `Acme Technologies offers the **Blue Cross Premium Health Plan**.\n\n**Key Details:**\n- Company pays 75% of the premium\n- Your monthly cost: $150.00\n- Deductible: $500 individual / $1,000 family\n- Copay: $20 primary care / $40 specialist\n\n**Coverage includes:**\n- Preventive care (100% covered)\n- Hospital stays\n- Prescription drugs\n- Mental health services\n\nWould you like me to help you find in-network providers or explain any specific coverage?`
-  }
-
-  if (q.includes('401k') || q.includes('retirement') || q.includes('401(k)')) {
-    return `Acme Technologies offers a **401(k) retirement plan** through Fidelity.\n\n**Key Details:**\n- Company match: 4% of your salary\n- Immediate vesting (you own 100% from day 1)\n- Contribution limit (2026): $23,000\n\n**To Enroll:**\n1. Log into Fidelity NetBenefits\n2. Select "Enroll in 401(k)"\n3. Choose your contribution percentage\n4. Select your investment funds\n\nI recommend contributing at least 4% to maximize the company match. Would you like me to help you get started?`
-  }
-
-  if (q.includes('core hours') || q.includes('working hours') || q.includes('work hours') || q.includes('schedule')) {
-    return `Acme Technologies follows a **hybrid work model**.\n\n**Schedule:**\n- Office days: Tuesday, Wednesday, Thursday\n- Remote days: Monday, Friday\n- Core hours: 10 AM - 4 PM PT\n\nYou're expected to be available during core hours for meetings and collaboration. Outside of core hours, you have flexibility to manage your own schedule.\n\nNeed to request a schedule accommodation? I can help with that.`
-  }
-
-  if (q.includes('who is on leave') || q.includes("who's out") || q.includes('who is out')) {
-    return `Here's who's on leave this week (Feb 10-14, 2026):\n\n**Currently Out:**\n- Rachel Kim (HR) - On leave until Feb 21\n\n**Upcoming Time Off:**\n- Sarah Chen - Feb 24-26 (pending approval)\n- Tom Wilson - Mar 3-7 (pending approval)\n\nWould you like to see the full team calendar?`
-  }
-
-  if (q.includes('remote') || q.includes('work from home') || q.includes('wfh')) {
-    return `**Acme Technologies Remote Work Policy:**\n\nWe follow a hybrid model:\n- **In-office days:** Tuesday, Wednesday, Thursday\n- **Remote days:** Monday, Friday\n- **Core hours:** 10 AM - 4 PM PT\n\n**Home Office Benefits:**\n- $500 one-time setup stipend\n- $50/month ongoing stipend\n- VPN access required\n\nNeed equipment or have questions about remote work setup?`
-  }
-
-  // Default response
-  return `I understand you're asking about "${question}". Let me help you with that.\n\nI can assist with:\n- **Time Off:** PTO balance, requesting time off, leave policies\n- **Payroll:** Pay dates, pay stubs, direct deposit\n- **Benefits:** Health insurance, dental, vision, 401(k)\n- **Policies:** Remote work, dress code, expense reports\n\nCould you provide more details about what you'd like to know?`
+  const data = await response.json()
+  return data.message
 }
 
 export default function AIAssistantPage() {
@@ -101,23 +86,39 @@ export default function AIAssistantPage() {
       timestamp: new Date()
     }
 
-    setMessages(prev => [...prev, userMessage])
+    const updatedMessages = [...messages, userMessage]
+    setMessages(updatedMessages)
     setInput('')
     setIsLoading(true)
 
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 1000))
+    try {
+      // Build conversation history for API
+      const history = updatedMessages
+        .filter(m => m.id !== '1') // Exclude initial greeting
+        .map(m => ({ role: m.role, content: m.content }))
 
-    const response = getAIResponse(messageText)
-    const assistantMessage: Message = {
-      id: (Date.now() + 1).toString(),
-      role: 'assistant',
-      content: response,
-      timestamp: new Date()
+      const response = await callAIApi(messageText, history)
+
+      const assistantMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: response,
+        timestamp: new Date()
+      }
+
+      setMessages(prev => [...prev, assistantMessage])
+    } catch (error) {
+      console.error('Error getting AI response:', error)
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: "I'm sorry, I'm having trouble processing your request right now. Please try again in a moment.",
+        timestamp: new Date()
+      }
+      setMessages(prev => [...prev, errorMessage])
+    } finally {
+      setIsLoading(false)
     }
-
-    setMessages(prev => [...prev, assistantMessage])
-    setIsLoading(false)
   }
 
   const handleSuggestedQuestion = (question: string) => {
