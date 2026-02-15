@@ -2,7 +2,6 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import Image from "next/image"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -209,49 +208,49 @@ function DashboardMockup() {
   )
 }
 
-// Bento Grid Item
+// Bento Grid Items - optimized layout
 const bentoItems = [
   {
     title: "Automated Payroll",
-    description: "Run payroll in minutes with automatic tax calculations",
-    image: "/images/bento-payroll.png",
+    description: "Run payroll in minutes with automatic tax calculations and compliance",
     icon: Calculator,
-    span: "col-span-2 row-span-2"
+    gradient: "from-blue-500 to-indigo-600",
+    size: "large"
   },
   {
     title: "Employee Management",
-    description: "Centralize all HR data",
-    image: "/images/bento-employees.png",
+    description: "Centralize all HR data in one place",
     icon: Users,
-    span: "col-span-1 row-span-1"
+    gradient: "from-emerald-500 to-teal-600",
+    size: "small"
   },
   {
     title: "Time Tracking",
-    description: "Track hours and PTO",
-    image: "/images/bento-time.png",
+    description: "Track hours, PTO, and attendance",
     icon: Clock,
-    span: "col-span-1 row-span-1"
+    gradient: "from-amber-500 to-orange-600",
+    size: "small"
   },
   {
     title: "Benefits Admin",
-    description: "Health, dental, 401(k)",
-    image: "/images/bento-benefits.png",
+    description: "Health, dental, vision, and 401(k) management",
     icon: Shield,
-    span: "col-span-1 row-span-2"
+    gradient: "from-purple-500 to-violet-600",
+    size: "medium"
   },
   {
     title: "AI HR Assistant",
-    description: "Get instant answers",
-    image: "/images/bento-ai.png",
+    description: "Instant answers to HR questions",
     icon: MessageSquare,
-    span: "col-span-1 row-span-1"
+    gradient: "from-pink-500 to-rose-600",
+    size: "small"
   },
   {
-    title: "Analytics",
-    description: "Insights and reports",
-    image: "/images/bento-analytics.png",
-    icon: Zap,
-    span: "col-span-1 row-span-1"
+    title: "Analytics & Reports",
+    description: "Insights and workforce analytics",
+    icon: BarChart3,
+    gradient: "from-cyan-500 to-blue-600",
+    size: "small"
   }
 ]
 
@@ -398,38 +397,35 @@ export default function LandingPage() {
               From payroll to benefits to compliance, PayPilot handles it all.
             </motion.p>
 
-            {/* Bento Grid */}
-            <div className="grid grid-cols-4 grid-rows-3 gap-4 auto-rows-[180px]">
+            {/* Bento Grid - Clean icon-based design */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {bentoItems.map((item, index) => (
                 <motion.div
                   key={item.title}
-                  className={`${item.span} relative group`}
+                  className={`${item.size === 'large' ? 'md:col-span-2 md:row-span-2' : item.size === 'medium' ? 'md:row-span-2' : ''} relative group`}
                   variants={scaleIn}
                   initial="hidden"
                   whileInView="visible"
                   viewport={{ once: true }}
-                  transition={{ delay: index * 0.1 }}
+                  transition={{ delay: index * 0.08 }}
                 >
-                  <Card className="h-full overflow-hidden border border-border bg-white hover:border-primary/50 transition-all duration-300">
-                    <div className="relative h-full">
-                      <Image
-                        src={item.image}
-                        alt={item.title}
-                        fill
-                        className="object-cover opacity-90 group-hover:opacity-100 transition-opacity"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
-                      <div className="absolute bottom-0 left-0 right-0 p-4">
-                        <div className="flex items-center gap-2 mb-1">
-                          <item.icon className="w-4 h-4 text-white" />
-                          <h3 className="text-sm font-semibold text-white">
-                            {item.title}
-                          </h3>
-                        </div>
-                        <p className="text-xs text-white/80">
-                          {item.description}
-                        </p>
+                  <Card className={`h-full overflow-hidden border border-border bg-white hover:shadow-lg hover:border-primary/30 transition-all duration-300 ${item.size === 'large' ? 'min-h-[320px]' : item.size === 'medium' ? 'min-h-[280px]' : 'min-h-[160px]'}`}>
+                    <div className="relative h-full p-6 flex flex-col">
+                      {/* Icon with gradient background */}
+                      <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${item.gradient} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
+                        <item.icon className="w-6 h-6 text-white" />
                       </div>
+
+                      {/* Title and Description */}
+                      <h3 className={`font-semibold text-foreground mb-2 ${item.size === 'large' ? 'text-xl' : 'text-base'}`}>
+                        {item.title}
+                      </h3>
+                      <p className={`text-muted-foreground ${item.size === 'large' ? 'text-base' : 'text-sm'}`}>
+                        {item.description}
+                      </p>
+
+                      {/* Decorative gradient blob */}
+                      <div className={`absolute -bottom-8 -right-8 w-32 h-32 rounded-full bg-gradient-to-br ${item.gradient} opacity-5 group-hover:opacity-10 transition-opacity`} />
                     </div>
                   </Card>
                 </motion.div>
