@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { getAuthContext } from '@/lib/api-auth'
+import { getAgentAnalytics, STATIC_CONVERSATIONS, STATIC_FEEDBACK_SUMMARIES, STATIC_EMPLOYEES } from '@/lib/agent-demo-data'
 
 /**
  * GET /api/admin/agents/insights - Admin insights dashboard data
@@ -30,6 +31,67 @@ export async function GET(request: Request) {
 
     const url = new URL(request.url)
     const period = url.searchParams.get('period') || '30d' // 7d, 30d, 90d, all
+
+    // Return demo data in demo mode
+    if (authContext.isDemo) {
+      const analytics = getAgentAnalytics()
+
+      // Calculate sentiment distribution
+      const sentimentDistribution: Record<string, number> = {
+        positive: 0,
+        neutral: 0,
+        negative: 0,
+      }
+      STATIC_FEEDBACK_SUMMARIES.forEach(s => {
+        sentimentDistribution[s.sentiment] = (sentimentDistribution[s.sentiment] || 0) + 1
+      })
+
+      // Calculate message counts
+      const totalMessages = STATIC_CONVERSATIONS.reduce((acc, c) => acc + c.messages.length, 0)
+
+      return NextResponse.json({
+        period,
+        summary: {
+          totalConversations: analytics.totalConversations,
+          activeConversations: analytics.activeConversations,
+          totalMessages,
+          uniqueParticipants: analytics.totalConversations, // Each conversation has unique participant
+          totalEmployees: STATIC_EMPLOYEES.length,
+          engagementRate: Math.round(analytics.participationRate * 100),
+          responseRate: 85, // Demo value
+          activeAgents: 2,
+          escalationCount: analytics.escalations.length,
+          avgSentimentScore: analytics.avgSentimentScore,
+        },
+        conversationsByStatus: {
+          active: analytics.activeConversations,
+          completed: analytics.completedConversations,
+          escalated: analytics.escalatedConversations,
+        },
+        sentimentDistribution,
+        topTags: analytics.topTags,
+        escalationsByStatus: {
+          open: analytics.escalations.length,
+          resolved: 0,
+        },
+        messagesBySender: {
+          agent: Math.ceil(totalMessages * 0.5),
+          employee: Math.floor(totalMessages * 0.5),
+        },
+        recentRuns: [
+          {
+            id: 'run_001',
+            runType: 'scheduled',
+            status: 'completed',
+            startedAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+            finishedAt: new Date(Date.now() - 24 * 60 * 60 * 1000 + 300000).toISOString(),
+            messagesSent: 10,
+            conversationsTouched: 10,
+            agentName: 'Weekly Pulse Check',
+          },
+        ],
+      })
+    }
 
     const supabase = await createClient()
 
