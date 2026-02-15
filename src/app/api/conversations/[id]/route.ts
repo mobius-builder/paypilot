@@ -1,5 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { getAuthContext } from '@/lib/api-auth'
+import { getDemoConversation, getDemoMessages } from '@/lib/demo-context'
 
 // GET /api/conversations/[id] - Get conversation with messages
 export async function GET(
@@ -7,25 +9,29 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = await createClient()
+    const authContext = await getAuthContext()
     const { id } = await params
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-
-    if (authError || !user) {
+    if (!authContext) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Get user's company
-    const { data: membership } = await supabase
-      .from('company_members')
-      .select('company_id, role')
-      .eq('user_id', user.id)
-      .single()
-
-    if (!membership) {
-      return NextResponse.json({ error: 'Not a company member' }, { status: 403 })
+    // Demo mode - return mock conversation and messages
+    if (authContext.isDemo) {
+      const conversation = getDemoConversation(id)
+      if (!conversation) {
+        return NextResponse.json({ error: 'Conversation not found' }, { status: 404 })
+      }
+      const messages = getDemoMessages(id)
+      return NextResponse.json({
+        conversation,
+        messages,
+        summary: null,
+      })
     }
+
+    // Real Supabase query
+    const supabase = await createClient()
 
     // Get conversation
     const { data: conversation, error: convError } = await supabase
@@ -50,7 +56,7 @@ export async function GET(
         )
       `)
       .eq('id', id)
-      .eq('company_id', membership.company_id)
+      .eq('company_id', authContext.companyId)
       .single()
 
     if (convError || !conversation) {
@@ -58,8 +64,8 @@ export async function GET(
     }
 
     // Check access - employee can only see their own, admin can see all
-    const isAdmin = ['owner', 'admin', 'hr_manager', 'manager'].includes(membership.role)
-    if (!isAdmin && conversation.participant_user_id !== user.id) {
+    const isAdmin = ['owner', 'admin', 'hr_manager', 'manager'].includes(authContext.role)
+    if (!isAdmin && conversation.participant_user_id !== authContext.userId) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 
@@ -84,7 +90,7 @@ export async function GET(
     }
 
     // Mark messages as read if this is the employee
-    if (conversation.participant_user_id === user.id) {
+    if (conversation.participant_user_id === authContext.userId) {
       const unreadIds = (messages || [])
         .filter(m => !m.is_read && m.sender_type === 'agent')
         .map(m => m.id)

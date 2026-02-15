@@ -1,30 +1,31 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { getAuthContext } from '@/lib/api-auth'
+import { DEMO_CONVERSATIONS, DEMO_MESSAGES } from '@/lib/demo-context'
 
 // GET /api/conversations - List conversations
 export async function GET(request: Request) {
   try {
-    const supabase = await createClient()
+    const authContext = await getAuthContext()
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-
-    if (authError || !user) {
+    if (!authContext) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const url = new URL(request.url)
     const view = url.searchParams.get('view') || 'employee' // 'employee' or 'admin'
 
-    // Get user's company and role
-    const { data: membership } = await supabase
-      .from('company_members')
-      .select('company_id, role')
-      .eq('user_id', user.id)
-      .single()
-
-    if (!membership) {
-      return NextResponse.json({ conversations: [] })
+    // Demo mode - return mock conversations
+    if (authContext.isDemo) {
+      const demoConversations = DEMO_CONVERSATIONS.map(conv => ({
+        ...conv,
+        latest_message: DEMO_MESSAGES[conv.id]?.[DEMO_MESSAGES[conv.id].length - 1] || null,
+      }))
+      return NextResponse.json({ conversations: demoConversations })
     }
+
+    // Real Supabase query
+    const supabase = await createClient()
 
     let query = supabase
       .from('conversations')
@@ -45,13 +46,13 @@ export async function GET(request: Request) {
           avatar_url
         )
       `)
-      .eq('company_id', membership.company_id)
+      .eq('company_id', authContext.companyId)
       .order('last_message_at', { ascending: false, nullsFirst: false })
 
     // Employee view: only their conversations
     // Admin view: all conversations
-    if (view === 'employee' || !['owner', 'admin', 'hr_manager', 'manager'].includes(membership.role)) {
-      query = query.eq('participant_user_id', user.id)
+    if (view === 'employee' || !['owner', 'admin', 'hr_manager', 'manager'].includes(authContext.role)) {
+      query = query.eq('participant_user_id', authContext.userId)
     }
 
     const { data: conversations, error } = await query.limit(50)
