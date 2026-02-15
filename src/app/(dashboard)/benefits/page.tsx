@@ -202,7 +202,7 @@ export default function BenefitsPage() {
   const getColorClasses = (color: string) => {
     const colors: Record<string, { bg: string; text: string; icon: string }> = {
       red: { bg: 'bg-red-100', text: 'text-red-700', icon: 'text-red-600' },
-      blue: { bg: 'bg-blue-100', text: 'text-blue-700', icon: 'text-blue-600' },
+      blue: { bg: 'bg-accent', text: 'text-primary', icon: 'text-primary' },
       violet: { bg: 'bg-violet-100', text: 'text-violet-700', icon: 'text-violet-600' },
       emerald: { bg: 'bg-emerald-100', text: 'text-emerald-700', icon: 'text-emerald-600' },
     }
@@ -228,8 +228,8 @@ export default function BenefitsPage() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                <Shield className="w-5 h-5 text-blue-600" />
+              <div className="w-10 h-10 bg-accent rounded-lg flex items-center justify-center">
+                <Shield className="w-5 h-5 text-primary" />
               </div>
               <div>
                 <p className="text-2xl font-bold text-slate-900">{enrolledBenefitsList.length}</p>
@@ -460,12 +460,12 @@ export default function BenefitsPage() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="bg-blue-50 p-4 rounded-lg">
+            <div className="bg-accent p-4 rounded-lg">
               <div className="flex items-center gap-2 mb-2">
-                {selectedBenefit && <selectedBenefit.icon className="w-5 h-5 text-blue-600" />}
-                <span className="font-medium text-blue-800">{selectedBenefit?.name}</span>
+                {selectedBenefit && <selectedBenefit.icon className="w-5 h-5 text-primary" />}
+                <span className="font-medium text-foreground">{selectedBenefit?.name}</span>
               </div>
-              <p className="text-sm text-blue-600">
+              <p className="text-sm text-primary">
                 {selectedBenefit?.name === 'Life Insurance'
                   ? 'Coverage: 1x your annual salary. Company paid - no cost to you.'
                   : 'HSA contribution limit: $3,850/year. Pre-tax contributions reduce your taxable income.'}

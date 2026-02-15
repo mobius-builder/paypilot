@@ -269,7 +269,7 @@ export default function EmployeesPage() {
       case 'active':
         return <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">Active</Badge>
       case 'onboarding':
-        return <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">Onboarding</Badge>
+        return <Badge className="bg-accent text-primary hover:bg-accent">Onboarding</Badge>
       case 'on_leave':
         return <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100">On Leave</Badge>
       case 'terminated':
@@ -300,7 +300,7 @@ export default function EmployeesPage() {
           </Button>
           <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
+              <Button className="bg-primary hover:bg-primary/90">
                 <Plus className="w-4 h-4 mr-2" />
                 Add Employee
               </Button>
@@ -422,7 +422,7 @@ export default function EmployeesPage() {
                   Cancel
                 </Button>
                 <Button
-                  className="bg-gradient-to-r from-blue-600 to-indigo-600"
+                  className="bg-primary hover:bg-primary/90"
                   onClick={handleAddEmployee}
                   disabled={isSubmitting}
                 >
@@ -449,8 +449,8 @@ export default function EmployeesPage() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                <Users className="w-5 h-5 text-blue-600" />
+              <div className="w-10 h-10 bg-accent rounded-lg flex items-center justify-center">
+                <Users className="w-5 h-5 text-primary" />
               </div>
               <div>
                 <p className="text-2xl font-bold text-slate-900">{employees.length}</p>
@@ -565,7 +565,7 @@ export default function EmployeesPage() {
                   <TableCell>
                     <Link href={`/employees/${employee.id}`} className="flex items-center gap-3">
                       <Avatar>
-                        <AvatarFallback className="bg-blue-100 text-blue-700">
+                        <AvatarFallback className="bg-accent text-primary">
                           {employee.avatar}
                         </AvatarFallback>
                       </Avatar>

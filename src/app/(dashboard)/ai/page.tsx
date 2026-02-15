@@ -130,7 +130,7 @@ export default function AIAssistantPage() {
       {/* Header */}
       <div className="mb-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
+          <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
             <Sparkles className="w-6 h-6 text-white" />
           </div>
           <div>
@@ -151,7 +151,7 @@ export default function AIAssistantPage() {
               >
                 {message.role === 'assistant' && (
                   <Avatar className="w-8 h-8">
-                    <AvatarFallback className="bg-gradient-to-br from-blue-600 to-indigo-600">
+                    <AvatarFallback className="bg-primary">
                       <Sparkles className="w-4 h-4 text-white" />
                     </AvatarFallback>
                   </Avatar>
@@ -159,7 +159,7 @@ export default function AIAssistantPage() {
                 <div
                   className={`max-w-[80%] rounded-2xl px-4 py-3 ${
                     message.role === 'user'
-                      ? 'bg-gradient-to-br from-blue-600 to-indigo-600 text-white rounded-tr-none'
+                      ? 'bg-primary text-white rounded-tr-none'
                       : 'bg-slate-100 text-slate-900 rounded-tl-none'
                   }`}
                 >
@@ -174,7 +174,7 @@ export default function AIAssistantPage() {
                 </div>
                 {message.role === 'user' && (
                   <Avatar className="w-8 h-8">
-                    <AvatarFallback className="bg-blue-100 text-blue-700">
+                    <AvatarFallback className="bg-accent text-primary">
                       <User className="w-4 h-4" />
                     </AvatarFallback>
                   </Avatar>
@@ -184,7 +184,7 @@ export default function AIAssistantPage() {
             {isLoading && (
               <div className="flex gap-3">
                 <Avatar className="w-8 h-8">
-                  <AvatarFallback className="bg-gradient-to-br from-blue-600 to-indigo-600">
+                  <AvatarFallback className="bg-primary">
                     <Sparkles className="w-4 h-4 text-white" />
                   </AvatarFallback>
                 </Avatar>
@@ -208,16 +208,16 @@ export default function AIAssistantPage() {
                 <button
                   key={i}
                   onClick={() => handleSuggestedQuestion(q.text)}
-                  className="flex items-center gap-3 p-3 bg-white border rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors text-left group"
+                  className="flex items-center gap-3 p-3 bg-white border rounded-lg hover:border-primary hover:bg-accent transition-colors text-left group"
                 >
-                  <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-blue-200">
-                    <q.icon className="w-4 h-4 text-blue-600" />
+                  <div className="w-8 h-8 bg-accent rounded-lg flex items-center justify-center group-hover:bg-accent">
+                    <q.icon className="w-4 h-4 text-primary" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-slate-900 truncate">{q.text}</p>
                     <p className="text-xs text-slate-500">{q.category}</p>
                   </div>
-                  <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-blue-600" />
+                  <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-primary" />
                 </button>
               ))}
             </div>
@@ -243,7 +243,7 @@ export default function AIAssistantPage() {
             <Button
               type="submit"
               disabled={!input.trim() || isLoading}
-              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+              className="bg-primary hover:bg-primary/90"
             >
               <Send className="w-4 h-4" />
             </Button>

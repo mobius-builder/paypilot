@@ -112,12 +112,12 @@ export default function RunPayrollPage() {
                 <div className={`flex items-center gap-3 ${currentStep >= step.id ? 'text-blue-600' : 'text-slate-400'}`}>
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
                     currentStep > step.id ? 'bg-emerald-100' :
-                    currentStep === step.id ? 'bg-blue-100' : 'bg-slate-100'
+                    currentStep === step.id ? 'bg-accent' : 'bg-slate-100'
                   }`}>
                     {currentStep > step.id ? (
                       <CheckCircle2 className="w-5 h-5 text-emerald-600" />
                     ) : (
-                      <step.icon className={`w-5 h-5 ${currentStep === step.id ? 'text-blue-600' : 'text-slate-400'}`} />
+                      <step.icon className={`w-5 h-5 ${currentStep === step.id ? 'text-primary' : 'text-slate-400'}`} />
                     )}
                   </div>
                   <span className={`hidden sm:block text-sm font-medium ${
@@ -146,8 +146,8 @@ export default function RunPayrollPage() {
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="p-4 border-2 border-blue-500 rounded-lg bg-blue-50">
-                <Badge className="bg-blue-100 text-blue-700 mb-2">Current Period</Badge>
+              <div className="p-4 border-2 border-primary rounded-lg bg-accent">
+                <Badge className="bg-accent text-primary mb-2 border border-border">Current Period</Badge>
                 <p className="font-semibold text-slate-900">{payPeriod.start} - {payPeriod.end}</p>
                 <p className="text-sm text-slate-500">Pay Date: {payPeriod.payDate}</p>
               </div>
@@ -174,7 +174,7 @@ export default function RunPayrollPage() {
                 <div key={emp.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
                   <div className="flex items-center gap-3">
                     <Avatar>
-                      <AvatarFallback className="bg-blue-100 text-blue-700">{emp.avatar}</AvatarFallback>
+                      <AvatarFallback className="bg-accent text-primary">{emp.avatar}</AvatarFallback>
                     </Avatar>
                     <div>
                       <p className="font-medium text-slate-900">{emp.name}</p>
@@ -211,12 +211,12 @@ export default function RunPayrollPage() {
           <CardContent className="space-y-6">
             {!isCalculating && calculationProgress === 0 ? (
               <div className="text-center py-12">
-                <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <Calculator className="w-10 h-10 text-blue-600" />
+                <div className="w-20 h-20 bg-accent rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Calculator className="w-10 h-10 text-primary" />
                 </div>
                 <h3 className="text-xl font-semibold text-slate-900 mb-2">Ready to Calculate</h3>
                 <p className="text-slate-600 mb-6">Click the button below to calculate payroll for {employees.length} employees</p>
-                <Button size="lg" onClick={calculatePayroll} className="bg-gradient-to-r from-blue-600 to-indigo-600">
+                <Button size="lg" onClick={calculatePayroll} className="bg-primary hover:bg-primary/90">
                   <Sparkles className="w-5 h-5 mr-2" />
                   Calculate Payroll
                 </Button>
@@ -293,17 +293,17 @@ export default function RunPayrollPage() {
               </div>
             </div>
 
-            <div className="p-4 bg-blue-50 rounded-lg flex items-center justify-between">
+            <div className="p-4 bg-accent rounded-lg flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                  <Users className="w-6 h-6 text-blue-600" />
+                <div className="w-12 h-12 bg-accent rounded-full flex items-center justify-center border border-border">
+                  <Users className="w-6 h-6 text-primary" />
                 </div>
                 <div>
                   <p className="font-semibold text-slate-900">{employees.length} Employees</p>
                   <p className="text-sm text-slate-600">Pay Date: {payPeriod.payDate}</p>
                 </div>
               </div>
-              <Badge className="bg-blue-100 text-blue-700">Ready to Submit</Badge>
+              <Badge className="bg-accent text-primary border border-border">Ready to Submit</Badge>
             </div>
 
             <div className="flex justify-between pt-4 border-t">

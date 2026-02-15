@@ -108,13 +108,13 @@ function CurrentPayrollCard({ payroll, onApprove }: { payroll: typeof initialPay
       )
     },
     approved: {
-      borderColor: 'border-blue-200',
-      bgColor: 'bg-blue-50/50',
-      iconBg: 'bg-blue-100',
-      iconColor: 'text-blue-600',
+      borderColor: 'border-border',
+      bgColor: 'bg-accent',
+      iconBg: 'bg-accent',
+      iconColor: 'text-primary',
       icon: CheckCircle2,
       title: 'Payroll Approved',
-      action: <Badge className="bg-blue-100 text-blue-700">Approved</Badge>
+      action: <Badge className="bg-accent text-primary border border-border">Approved</Badge>
     },
     processing: {
       borderColor: 'border-violet-200',
@@ -257,7 +257,7 @@ export default function PayrollPage() {
       case 'draft':
         return <Badge variant="secondary">Draft</Badge>
       case 'calculating':
-        return <Badge className="bg-blue-100 text-blue-700">Calculating</Badge>
+        return <Badge className="bg-accent text-primary">Calculating</Badge>
       case 'pending_approval':
         return <Badge className="bg-amber-100 text-amber-700">Pending Approval</Badge>
       case 'approved':
@@ -290,7 +290,7 @@ export default function PayrollPage() {
             Export Reports
           </Button>
           <Link href="/payroll/run">
-            <Button className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
+            <Button className="bg-primary hover:bg-primary/90">
               <Play className="w-4 h-4 mr-2" />
               Run Payroll
             </Button>
@@ -316,8 +316,8 @@ export default function PayrollPage() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                <Users className="w-5 h-5 text-blue-600" />
+              <div className="w-10 h-10 bg-accent rounded-lg flex items-center justify-center">
+                <Users className="w-5 h-5 text-primary" />
               </div>
               <div>
                 <p className="text-2xl font-bold text-slate-900">47</p>
@@ -393,7 +393,7 @@ export default function PayrollPage() {
                       <TableCell>
                         <div className="flex items-center gap-3">
                           <Avatar className="w-8 h-8">
-                            <AvatarFallback className="bg-blue-100 text-blue-700 text-xs">
+                            <AvatarFallback className="bg-accent text-primary text-xs">
                               {emp.avatar}
                             </AvatarFallback>
                           </Avatar>
@@ -531,7 +531,7 @@ export default function PayrollPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-3">
               <Avatar className="w-10 h-10">
-                <AvatarFallback className="bg-blue-100 text-blue-700">
+                <AvatarFallback className="bg-accent text-primary">
                   {selectedEmployee?.avatar}
                 </AvatarFallback>
               </Avatar>

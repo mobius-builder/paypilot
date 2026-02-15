@@ -86,7 +86,7 @@ export default function EmployeeDetailPage() {
       case 'active':
         return <Badge className="bg-emerald-100 text-emerald-700">Active</Badge>
       case 'onboarding':
-        return <Badge className="bg-blue-100 text-blue-700">Onboarding</Badge>
+        return <Badge className="bg-accent text-primary">Onboarding</Badge>
       case 'on_leave':
         return <Badge className="bg-amber-100 text-amber-700">On Leave</Badge>
       case 'terminated':
@@ -144,7 +144,7 @@ export default function EmployeeDetailPage() {
       <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
         <div className="flex items-center gap-4">
           <Avatar className="w-20 h-20">
-            <AvatarFallback className="bg-blue-100 text-blue-700 text-2xl">
+            <AvatarFallback className="bg-accent text-primary text-2xl">
               {employee.avatar}
             </AvatarFallback>
           </Avatar>
@@ -213,8 +213,8 @@ export default function EmployeeDetailPage() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                <Clock className="w-5 h-5 text-blue-600" />
+              <div className="w-10 h-10 bg-accent rounded-lg flex items-center justify-center">
+                <Clock className="w-5 h-5 text-primary" />
               </div>
               <div>
                 <p className="text-lg font-bold text-slate-900">{employee.ptoBalance}h</p>
@@ -434,7 +434,7 @@ export default function EmployeeDetailPage() {
                     <Separator />
                     <div className="flex justify-between">
                       <span className="font-medium">Remaining</span>
-                      <span className="font-bold text-blue-600">{employee.ptoBalance} hours</span>
+                      <span className="font-bold text-primary">{employee.ptoBalance} hours</span>
                     </div>
                   </div>
                 </div>

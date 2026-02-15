@@ -152,7 +152,7 @@ const orgData: Employee = {
 
 const departmentColors: Record<string, { bg: string; text: string; border: string }> = {
   'Executive': { bg: 'bg-purple-100', text: 'text-purple-700', border: 'border-purple-300' },
-  'Engineering': { bg: 'bg-blue-100', text: 'text-blue-700', border: 'border-blue-300' },
+  'Engineering': { bg: 'bg-accent', text: 'text-primary', border: 'border-primary' },
   'Design': { bg: 'bg-pink-100', text: 'text-pink-700', border: 'border-pink-300' },
   'Sales': { bg: 'bg-emerald-100', text: 'text-emerald-700', border: 'border-emerald-300' },
   'Marketing': { bg: 'bg-orange-100', text: 'text-orange-700', border: 'border-orange-300' },

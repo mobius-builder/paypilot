@@ -69,7 +69,7 @@ export default function SettingsPage() {
               {/* Avatar */}
               <div className="flex items-center gap-4">
                 <Avatar className="w-20 h-20">
-                  <AvatarFallback className="bg-blue-100 text-blue-700 text-2xl">JD</AvatarFallback>
+                  <AvatarFallback className="bg-accent text-primary text-2xl">JD</AvatarFallback>
                 </Avatar>
                 <div>
                   <Button variant="outline" size="sm">
@@ -302,7 +302,7 @@ export default function SettingsPage() {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="flex items-center gap-4">
-                <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center">
+                <div className="w-16 h-16 bg-primary rounded-xl flex items-center justify-center">
                   <span className="text-white text-xl font-bold">AC</span>
                 </div>
                 <div>
@@ -388,14 +388,14 @@ export default function SettingsPage() {
                 <CardDescription>Your subscription details</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center justify-between p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border border-blue-100">
+                <div className="flex items-center justify-between p-4 bg-accent rounded-lg border border-border">
                   <div>
-                    <p className="text-lg font-semibold text-slate-900">Growth Plan</p>
+                    <p className="text-lg font-semibold text-foreground">Growth Plan</p>
                     <p className="text-slate-600">$80/month + $6/employee</p>
                     <p className="text-sm text-slate-500 mt-1">47 employees • Next billing: Mar 1, 2026</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-2xl font-bold text-slate-900">$362</p>
+                    <p className="text-2xl font-bold text-foreground">$362</p>
                     <p className="text-sm text-slate-500">/month</p>
                   </div>
                 </div>

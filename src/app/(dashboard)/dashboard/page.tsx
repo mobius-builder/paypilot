@@ -29,8 +29,8 @@ const stats = [
     change: '+3',
     changeType: 'positive',
     icon: Users,
-    bgColor: 'bg-blue-100',
-    iconColor: 'text-blue-600'
+    bgColor: 'bg-accent',
+    iconColor: 'text-primary'
   },
   {
     name: 'Next Payroll',
@@ -124,7 +124,7 @@ export default function DashboardPage() {
             View Calendar
           </Button>
           <Link href="/payroll">
-            <Button className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
+            <Button className="bg-primary hover:bg-primary/90">
               Run Payroll
             </Button>
           </Link>
@@ -203,10 +203,10 @@ export default function DashboardPage() {
                 </p>
               </div>
             </div>
-            <div className="mt-4 flex items-center justify-between p-4 bg-blue-50 rounded-lg">
+            <div className="mt-4 flex items-center justify-between p-4 bg-accent rounded-lg">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                  <Users className="w-5 h-5 text-blue-600" />
+                <div className="w-10 h-10 bg-accent rounded-full flex items-center justify-center border border-border">
+                  <Users className="w-5 h-5 text-primary" />
                 </div>
                 <div>
                   <p className="font-medium text-slate-900">{upcomingPayroll.employees} employees</p>
@@ -249,7 +249,7 @@ export default function DashboardPage() {
               pendingApprovals.map((item) => (
                 <div key={item.id} className={`flex items-center gap-3 p-3 bg-slate-50 rounded-lg transition-opacity ${processingId === item.id ? 'opacity-50' : ''}`}>
                   <Avatar className="w-10 h-10">
-                    <AvatarFallback className="bg-blue-100 text-blue-700 text-sm">{item.avatar}</AvatarFallback>
+                    <AvatarFallback className="bg-accent text-primary text-sm">{item.avatar}</AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-slate-900 truncate">{item.name}</p>
@@ -307,7 +307,7 @@ export default function DashboardPage() {
                   <Badge variant="secondary" className={
                     activity.status === 'pending' ? 'bg-amber-100 text-amber-700' :
                     activity.status === 'approved' ? 'bg-emerald-100 text-emerald-700' :
-                    'bg-blue-100 text-blue-700'
+                    'bg-accent text-primary'
                   }>
                     {activity.status}
                   </Badge>
@@ -318,10 +318,10 @@ export default function DashboardPage() {
         </Card>
 
         {/* AI Assistant Quick Access */}
-        <Card className="bg-gradient-to-br from-slate-900 to-slate-800 text-white">
+        <Card className="bg-foreground text-white">
           <CardHeader>
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
                 <Sparkles className="w-5 h-5 text-white" />
               </div>
               <CardTitle className="text-white">AI Assistant</CardTitle>
@@ -368,7 +368,7 @@ export default function DashboardPage() {
         </Card>
         <Card className="p-4">
           <div className="flex items-center gap-3">
-            <Users className="w-5 h-5 text-blue-500" />
+            <Users className="w-5 h-5 text-primary" />
             <div>
               <p className="text-sm text-slate-500">New Hires (Q1)</p>
               <p className="text-lg font-semibold text-slate-900">8</p>

@@ -51,8 +51,8 @@ const kpiCards = [
     trend: 'up',
     period: 'vs last quarter',
     icon: Users,
-    bgColor: 'bg-blue-100',
-    iconColor: 'text-blue-600'
+    bgColor: 'bg-accent',
+    iconColor: 'text-primary'
   },
   {
     title: 'Avg. Salary',
@@ -208,7 +208,7 @@ export default function ReportsPage() {
                 </div>
                 <Badge
                   variant={kpi.trend === 'up' ? 'default' : 'secondary'}
-                  className={kpi.trend === 'up' ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'}
+                  className={kpi.trend === 'up' ? 'bg-emerald-100 text-emerald-700' : 'bg-accent text-primary'}
                 >
                   {kpi.trend === 'up' ? (
                     <ArrowUpRight className="w-3 h-3 mr-1" />
@@ -234,7 +234,7 @@ export default function ReportsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="flex items-center gap-2">
-                  <LineChart className="w-5 h-5 text-blue-600" />
+                  <LineChart className="w-5 h-5 text-primary" />
                   Payroll Trend
                 </CardTitle>
                 <CardDescription>Monthly payroll expenses over time</CardDescription>
@@ -250,7 +250,7 @@ export default function ReportsPage() {
                 <div key={month.month} className="flex-1 flex flex-col items-center">
                   <div
                     className={`w-full rounded-t transition-all ${
-                      idx === monthlyPayroll.length - 1 ? 'bg-blue-600' : 'bg-blue-200'
+                      idx === monthlyPayroll.length - 1 ? 'bg-primary' : 'bg-accent'
                     }`}
                     style={{ height: `${(month.amount / maxPayroll) * 100}%` }}
                   />
@@ -325,8 +325,8 @@ export default function ReportsPage() {
                       <div
                         className={`h-full transition-all ${
                           idx === 0 ? 'bg-slate-400' :
-                          idx === 1 ? 'bg-blue-400' :
-                          idx === 2 ? 'bg-indigo-400' :
+                          idx === 1 ? 'bg-primary/60' :
+                          idx === 2 ? 'bg-primary/80' :
                           idx === 3 ? 'bg-violet-400' :
                           'bg-emerald-500'
                         }`}
@@ -361,9 +361,9 @@ export default function ReportsPage() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-6 mb-6">
-              <div className="p-4 bg-blue-50 rounded-lg text-center">
-                <p className="text-3xl font-bold text-blue-700">1,840</p>
-                <p className="text-sm text-blue-600">PTO Hours Used</p>
+              <div className="p-4 bg-accent rounded-lg text-center">
+                <p className="text-3xl font-bold text-primary">1,840</p>
+                <p className="text-sm text-primary">PTO Hours Used</p>
               </div>
               <div className="p-4 bg-amber-50 rounded-lg text-center">
                 <p className="text-3xl font-bold text-amber-700">312</p>
@@ -378,7 +378,7 @@ export default function ReportsPage() {
                   <span className="text-sm font-medium">65%</span>
                 </div>
                 <div className="h-3 bg-slate-100 rounded-full overflow-hidden">
-                  <div className="h-full bg-blue-500 rounded-full" style={{ width: '65%' }} />
+                  <div className="h-full bg-primary rounded-full" style={{ width: '65%' }} />
                 </div>
               </div>
               <div>

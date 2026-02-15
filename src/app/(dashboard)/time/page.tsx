@@ -308,7 +308,7 @@ export default function TimePage() {
   const getTypeIcon = (type: string) => {
     switch (type) {
       case 'pto':
-        return <Plane className="w-4 h-4 text-blue-500" />
+        return <Plane className="w-4 h-4 text-primary" />
       case 'sick':
         return <Stethoscope className="w-4 h-4 text-red-500" />
       default:
@@ -337,7 +337,7 @@ export default function TimePage() {
           </Button>
           <Dialog open={requestDialogOpen} onOpenChange={(open) => { setRequestDialogOpen(open); if (!open) resetRequestForm(); }}>
             <DialogTrigger asChild>
-              <Button className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
+              <Button className="bg-primary hover:bg-primary/90">
                 <Plus className="w-4 h-4 mr-2" />
                 Request Time Off
               </Button>
@@ -401,13 +401,13 @@ export default function TimePage() {
                     disabled={isSubmitting}
                   />
                 </div>
-                <div className="bg-blue-50 p-3 rounded-lg">
+                <div className="bg-accent p-3 rounded-lg">
                   <div className="flex justify-between items-center">
-                    <p className="text-sm text-blue-700">
+                    <p className="text-sm text-primary">
                       <strong>Your PTO Balance:</strong> 96 hours (12 days) remaining
                     </p>
                     {requestForm.startDate && requestForm.endDate && (
-                      <Badge className="bg-blue-100 text-blue-700">
+                      <Badge className="bg-accent text-primary border border-border">
                         {calculateHours(requestForm.startDate, requestForm.endDate)}h requested
                       </Badge>
                     )}
@@ -419,7 +419,7 @@ export default function TimePage() {
                   Cancel
                 </Button>
                 <Button
-                  className="bg-gradient-to-r from-blue-600 to-indigo-600"
+                  className="bg-primary hover:bg-primary/90"
                   onClick={handleSubmitRequest}
                   disabled={isSubmitting}
                 >
@@ -443,8 +443,8 @@ export default function TimePage() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                <Sun className="w-5 h-5 text-blue-600" />
+              <div className="w-10 h-10 bg-accent rounded-lg flex items-center justify-center">
+                <Sun className="w-5 h-5 text-primary" />
               </div>
               <div>
                 <p className="text-2xl font-bold text-slate-900">96</p>
@@ -531,7 +531,7 @@ export default function TimePage() {
                           <TableCell>
                             <div className="flex items-center gap-3">
                               <Avatar className="w-8 h-8">
-                                <AvatarFallback className="bg-blue-100 text-blue-700 text-xs">
+                                <AvatarFallback className="bg-accent text-primary text-xs">
                                   {request.avatar}
                                 </AvatarFallback>
                               </Avatar>
@@ -614,7 +614,7 @@ export default function TimePage() {
                       ))}
                       <TableRow className="bg-slate-50">
                         <TableCell colSpan={5} className="font-semibold">Week Total</TableCell>
-                        <TableCell className="text-right font-bold text-blue-600">37.0h</TableCell>
+                        <TableCell className="text-right font-bold text-primary">37.0h</TableCell>
                       </TableRow>
                     </TableBody>
                   </Table>
@@ -645,14 +645,14 @@ export default function TimePage() {
                           <TableCell>
                             <div className="flex items-center gap-3">
                               <Avatar className="w-8 h-8">
-                                <AvatarFallback className="bg-blue-100 text-blue-700 text-xs">
+                                <AvatarFallback className="bg-accent text-primary text-xs">
                                   {emp.avatar}
                                 </AvatarFallback>
                               </Avatar>
                               <span className="font-medium">{emp.name}</span>
                             </div>
                           </TableCell>
-                          <TableCell className="text-right font-medium text-blue-600">{emp.ptoBalance}h</TableCell>
+                          <TableCell className="text-right font-medium text-primary">{emp.ptoBalance}h</TableCell>
                           <TableCell className="text-right text-slate-500">{emp.ptoUsed}h</TableCell>
                           <TableCell className="text-right font-medium text-red-600">{emp.sickBalance}h</TableCell>
                           <TableCell className="text-right text-slate-500">{emp.sickUsed}h</TableCell>
