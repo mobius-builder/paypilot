@@ -3,19 +3,21 @@ import Stripe from 'stripe'
 
 // Initialize Stripe lazily to ensure env vars are available
 function getStripe(): Stripe | null {
-  const key = process.env.STRIPE_SECRET_KEY
+  const key = process.env.STRIPE_SECRET_KEY?.trim()
   if (!key) return null
   return new Stripe(key, {
     typescript: true,
-    maxNetworkRetries: 1
+    maxNetworkRetries: 2
   })
 }
 
-// Price IDs for each plan (would be created in Stripe Dashboard)
-const PRICE_IDS: Record<string, string> = {
-  starter: process.env.STRIPE_PRICE_STARTER || 'price_starter_monthly',
-  growth: process.env.STRIPE_PRICE_GROWTH || 'price_growth_monthly',
-  enterprise: process.env.STRIPE_PRICE_ENTERPRISE || 'price_enterprise_monthly'
+// Price IDs for each plan - trim to remove any trailing newlines from env vars
+function getPriceIds(): Record<string, string> {
+  return {
+    starter: (process.env.STRIPE_PRICE_STARTER || 'price_starter_monthly').trim(),
+    growth: (process.env.STRIPE_PRICE_GROWTH || 'price_growth_monthly').trim(),
+    enterprise: (process.env.STRIPE_PRICE_ENTERPRISE || 'price_enterprise_monthly').trim()
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -31,7 +33,8 @@ export async function POST(req: NextRequest) {
     }
 
     // Get price ID for the selected plan
-    const priceId = PRICE_IDS[plan]
+    const priceIds = getPriceIds()
+    const priceId = priceIds[plan]
     if (!priceId) {
       return NextResponse.json(
         { error: 'Invalid plan selected' },
