@@ -31,8 +31,12 @@ import {
   FileText,
   Bot,
   Plus,
+  MessageCircle,
+  CalendarDays,
+  Heart,
 } from 'lucide-react'
 import Link from 'next/link'
+import { useUser } from '@/contexts/user-context'
 
 // All hardcoded data - no API calls
 const STATS = {
@@ -90,7 +94,26 @@ const CELEBRATIONS = [
   { id: '5', type: 'anniversary', name: 'David Kim', detail: '5 years', avatar: 'DK', emoji: '⭐' },
 ]
 
+// Employee-specific data (when logged in as Sarah or another employee)
+const EMPLOYEE_STATS = {
+  ptoRemaining: 12,
+  ptoUsed: 8,
+  sickLeave: 5,
+  nextPayDate: 'Feb 20, 2026',
+  nextPayAmount: 4250,
+  pendingRequests: 1,
+  upcomingMeetings: 3,
+  unreadMessages: 2,
+}
+
+const EMPLOYEE_TASKS = [
+  { id: '1', task: 'Complete Q1 self-review', due: 'Feb 28', priority: 'high' },
+  { id: '2', task: 'Submit expense report', due: 'Feb 22', priority: 'medium' },
+  { id: '3', task: 'Update emergency contacts', due: 'Mar 15', priority: 'low' },
+]
+
 export default function OverviewPage() {
+  const { user, isAdmin, isLoading } = useUser()
   const [approvedItems, setApprovedItems] = useState<string[]>([])
 
   const handleApprove = (id: string, name: string, type: string) => {
@@ -101,6 +124,16 @@ export default function OverviewPage() {
   }
 
   const pendingApprovals = PENDING_APPROVALS.filter((item) => !approvedItems.includes(item.id))
+
+  // Get time-based greeting
+  const getGreeting = () => {
+    const hour = new Date().getHours()
+    if (hour < 12) return 'Good morning'
+    if (hour < 17) return 'Good afternoon'
+    return 'Good evening'
+  }
+
+  const firstName = user?.fullName?.split(' ')[0] || 'there'
 
   // Animation variants
   const containerVariants = {
@@ -131,96 +164,198 @@ export default function OverviewPage() {
       {/* Welcome header */}
       <motion.div variants={itemVariants} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Good morning, Alex!</h1>
-          <p className="text-muted-foreground">Here&apos;s what&apos;s happening at Acme Corporation today.</p>
+          <h1 className="text-2xl font-bold text-foreground">{getGreeting()}, {firstName}!</h1>
+          <p className="text-muted-foreground">
+            {isAdmin
+              ? `Here's what's happening at ${user?.companyName || 'your company'} today.`
+              : 'Here\'s your personal dashboard.'
+            }
+          </p>
           <div className="flex items-center gap-2 mt-2">
-            <Badge variant="outline" className="text-primary border-primary/20 bg-primary/5">
-              Admin
+            <Badge variant="outline" className={isAdmin
+              ? "text-primary border-primary/20 bg-primary/5"
+              : "text-secondary-foreground border-secondary bg-secondary/50"
+            }>
+              {isAdmin ? 'Admin' : 'Employee'}
             </Badge>
-            <span className="text-sm text-muted-foreground">HR Director • Human Resources</span>
+            <span className="text-sm text-muted-foreground">
+              {isAdmin ? 'HR Director • Human Resources' : user?.role || 'Team Member'}
+            </span>
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Link href="/employees?add=true">
-            <Button variant="outline" size="sm" className="gap-1.5">
-              <UserPlus className="w-4 h-4" />
-              Add Employee
-            </Button>
-          </Link>
-          <Link href="/payroll/run">
-            <Button variant="outline" size="sm" className="gap-1.5">
-              <Calculator className="w-4 h-4" />
-              Run Payroll
-            </Button>
-          </Link>
-          <Link href="/agents">
-            <Button variant="outline" size="sm" className="gap-1.5">
-              <Bot className="w-4 h-4" />
-              Launch Agent
-            </Button>
-          </Link>
-          <Link href="/reports">
-            <Button variant="outline" size="sm" className="gap-1.5">
-              <FileText className="w-4 h-4" />
-              Reports
-            </Button>
-          </Link>
+          {isAdmin ? (
+            <>
+              <Link href="/employees?add=true">
+                <Button variant="outline" size="sm" className="gap-1.5">
+                  <UserPlus className="w-4 h-4" />
+                  Add Employee
+                </Button>
+              </Link>
+              <Link href="/payroll/run">
+                <Button variant="outline" size="sm" className="gap-1.5">
+                  <Calculator className="w-4 h-4" />
+                  Run Payroll
+                </Button>
+              </Link>
+              <Link href="/agents">
+                <Button variant="outline" size="sm" className="gap-1.5">
+                  <Bot className="w-4 h-4" />
+                  Launch Agent
+                </Button>
+              </Link>
+              <Link href="/reports">
+                <Button variant="outline" size="sm" className="gap-1.5">
+                  <FileText className="w-4 h-4" />
+                  Reports
+                </Button>
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link href="/time">
+                <Button variant="outline" size="sm" className="gap-1.5">
+                  <CalendarDays className="w-4 h-4" />
+                  Request Time Off
+                </Button>
+              </Link>
+              <Link href="/messages">
+                <Button variant="outline" size="sm" className="gap-1.5">
+                  <MessageCircle className="w-4 h-4" />
+                  Messages
+                  {EMPLOYEE_STATS.unreadMessages > 0 && (
+                    <Badge variant="destructive" className="ml-1 h-5 w-5 p-0 flex items-center justify-center text-xs">
+                      {EMPLOYEE_STATS.unreadMessages}
+                    </Badge>
+                  )}
+                </Button>
+              </Link>
+              <Link href="/benefits">
+                <Button variant="outline" size="sm" className="gap-1.5">
+                  <Heart className="w-4 h-4" />
+                  Benefits
+                </Button>
+              </Link>
+            </>
+          )}
         </div>
       </motion.div>
 
-      {/* Stats grid */}
+      {/* Stats grid - Admin vs Employee view */}
       <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <motion.div variants={cardVariants}>
-        <Card className="hover:shadow-md transition-shadow">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-accent">
-                <Users className="w-5 h-5 text-primary" />
-              </div>
-              <Badge variant="outline" className="text-primary border-primary/20 bg-accent">
-                <ArrowUpRight className="w-3 h-3 mr-1" />
-                +3
-              </Badge>
-            </div>
-            <div className="mt-4">
-              <p className="text-2xl font-bold text-foreground">{STATS.totalEmployees}</p>
-              <p className="text-sm text-muted-foreground">Total Employees</p>
-            </div>
-          </CardContent>
-        </Card>
-        </motion.div>
+        {isAdmin ? (
+          <>
+            <motion.div variants={cardVariants}>
+              <Card className="hover:shadow-md transition-shadow">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-accent">
+                      <Users className="w-5 h-5 text-primary" />
+                    </div>
+                    <Badge variant="outline" className="text-primary border-primary/20 bg-accent">
+                      <ArrowUpRight className="w-3 h-3 mr-1" />
+                      +3
+                    </Badge>
+                  </div>
+                  <div className="mt-4">
+                    <p className="text-2xl font-bold text-foreground">{STATS.totalEmployees}</p>
+                    <p className="text-sm text-muted-foreground">Total Employees</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
 
-        <motion.div variants={cardVariants}>
-        <Card className="hover:shadow-md transition-shadow">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-accent">
-                <DollarSign className="w-5 h-5 text-primary" />
-              </div>
-            </div>
-            <div className="mt-4">
-              <p className="text-2xl font-bold text-foreground">${STATS.nextPayrollAmount.toLocaleString()}</p>
-              <p className="text-sm text-muted-foreground">{STATS.nextPayDate}</p>
-            </div>
-          </CardContent>
-        </Card>
-        </motion.div>
+            <motion.div variants={cardVariants}>
+              <Card className="hover:shadow-md transition-shadow">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-accent">
+                      <DollarSign className="w-5 h-5 text-primary" />
+                    </div>
+                  </div>
+                  <div className="mt-4">
+                    <p className="text-2xl font-bold text-foreground">${STATS.nextPayrollAmount.toLocaleString()}</p>
+                    <p className="text-sm text-muted-foreground">{STATS.nextPayDate}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
 
-        <motion.div variants={cardVariants}>
-        <Card className="hover:shadow-md transition-shadow">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-accent">
-                <Calendar className="w-5 h-5 text-primary" />
-              </div>
-            </div>
-            <div className="mt-4">
-              <p className="text-2xl font-bold text-foreground">{STATS.pendingPto}</p>
-              <p className="text-sm text-muted-foreground">Pending PTO</p>
-            </div>
-          </CardContent>
-        </Card>
-        </motion.div>
+            <motion.div variants={cardVariants}>
+              <Card className="hover:shadow-md transition-shadow">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-accent">
+                      <Calendar className="w-5 h-5 text-primary" />
+                    </div>
+                  </div>
+                  <div className="mt-4">
+                    <p className="text-2xl font-bold text-foreground">{STATS.pendingPto}</p>
+                    <p className="text-sm text-muted-foreground">Pending PTO</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </>
+        ) : (
+          <>
+            {/* Employee-specific stats */}
+            <motion.div variants={cardVariants}>
+              <Card className="hover:shadow-md transition-shadow">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-accent">
+                      <Calendar className="w-5 h-5 text-primary" />
+                    </div>
+                  </div>
+                  <div className="mt-4">
+                    <p className="text-2xl font-bold text-foreground">{EMPLOYEE_STATS.ptoRemaining}</p>
+                    <p className="text-sm text-muted-foreground">PTO Days Remaining</p>
+                    <p className="text-xs text-muted-foreground mt-1">{EMPLOYEE_STATS.ptoUsed} used this year</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            <motion.div variants={cardVariants}>
+              <Card className="hover:shadow-md transition-shadow">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-accent">
+                      <DollarSign className="w-5 h-5 text-primary" />
+                    </div>
+                  </div>
+                  <div className="mt-4">
+                    <p className="text-2xl font-bold text-foreground">${EMPLOYEE_STATS.nextPayAmount.toLocaleString()}</p>
+                    <p className="text-sm text-muted-foreground">Next Paycheck</p>
+                    <p className="text-xs text-muted-foreground mt-1">{EMPLOYEE_STATS.nextPayDate}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            <motion.div variants={cardVariants}>
+              <Card className="hover:shadow-md transition-shadow">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-accent">
+                      <MessageCircle className="w-5 h-5 text-primary" />
+                    </div>
+                    {EMPLOYEE_STATS.unreadMessages > 0 && (
+                      <Badge variant="destructive">
+                        {EMPLOYEE_STATS.unreadMessages} new
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="mt-4">
+                    <p className="text-2xl font-bold text-foreground">{EMPLOYEE_STATS.unreadMessages}</p>
+                    <p className="text-sm text-muted-foreground">Unread Messages</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </>
+        )}
 
         <motion.div variants={cardVariants}>
         <Card className="hover:shadow-md transition-shadow">
