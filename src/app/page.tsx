@@ -1,8 +1,10 @@
 'use client'
 
+import { useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import { Slider } from "@/components/ui/slider"
 import {
   Users,
   Calculator,
@@ -12,7 +14,9 @@ import {
   Zap,
   ChevronRight,
   Check,
-  Sparkles
+  Sparkles,
+  TrendingDown,
+  DollarSign
 } from "lucide-react"
 
 const features = [
@@ -86,6 +90,168 @@ const pricingPlans = [
     ]
   }
 ]
+
+// ROI Calculator Component
+function ROICalculator() {
+  const [employees, setEmployees] = useState([25])
+  const [hoursPerWeek, setHoursPerWeek] = useState([8])
+
+  const numEmployees = employees[0]
+  const hrHours = hoursPerWeek[0]
+  const hrHourlyRate = 45 // Average HR hourly rate
+
+  // Calculations
+  const weeklyHRCost = hrHours * hrHourlyRate
+  const monthlyHRCost = weeklyHRCost * 4.33
+  const yearlyHRCost = monthlyHRCost * 12
+
+  // PayPilot reduces HR time by 60%
+  const timeSavedPercent = 0.6
+  const timeSavedHours = hrHours * timeSavedPercent * 52 // yearly
+  const moneySaved = yearlyHRCost * timeSavedPercent
+
+  // PayPilot cost
+  const baseCost = numEmployees <= 10 ? 40 : numEmployees <= 50 ? 80 : 150
+  const perEmployeeCost = 6
+  const paypilotMonthlyCost = baseCost + (numEmployees * perEmployeeCost)
+  const paypilotYearlyCost = paypilotMonthlyCost * 12
+
+  // Net savings
+  const netSavings = moneySaved - paypilotYearlyCost
+  const roi = ((netSavings / paypilotYearlyCost) * 100).toFixed(0)
+
+  return (
+    <section className="py-20 px-4 bg-gradient-to-br from-emerald-50 to-teal-50">
+      <div className="max-w-5xl mx-auto">
+        <div className="text-center mb-12">
+          <div className="inline-flex items-center gap-2 bg-emerald-100 border border-emerald-200 rounded-full px-4 py-2 mb-6">
+            <Calculator className="w-4 h-4 text-emerald-600" />
+            <span className="text-sm text-emerald-700 font-medium">ROI Calculator</span>
+          </div>
+          <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
+            See how much you could save
+          </h2>
+          <p className="text-xl text-slate-600 max-w-2xl mx-auto">
+            Calculate your potential savings with PayPilot&apos;s AI-powered automation.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Inputs */}
+          <Card className="border-0 shadow-xl">
+            <CardContent className="p-8">
+              <h3 className="text-lg font-semibold text-slate-900 mb-6">Your Company</h3>
+
+              <div className="space-y-8">
+                <div>
+                  <div className="flex justify-between mb-3">
+                    <label className="text-sm font-medium text-slate-700">Number of Employees</label>
+                    <span className="text-sm font-bold text-blue-600">{numEmployees}</span>
+                  </div>
+                  <Slider
+                    value={employees}
+                    onValueChange={setEmployees}
+                    min={5}
+                    max={200}
+                    step={5}
+                    className="w-full"
+                  />
+                  <div className="flex justify-between mt-1 text-xs text-slate-400">
+                    <span>5</span>
+                    <span>200</span>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between mb-3">
+                    <label className="text-sm font-medium text-slate-700">Hours spent on HR/week</label>
+                    <span className="text-sm font-bold text-blue-600">{hrHours} hrs</span>
+                  </div>
+                  <Slider
+                    value={hoursPerWeek}
+                    onValueChange={setHoursPerWeek}
+                    min={2}
+                    max={40}
+                    step={1}
+                    className="w-full"
+                  />
+                  <div className="flex justify-between mt-1 text-xs text-slate-400">
+                    <span>2 hrs</span>
+                    <span>40 hrs</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-8 p-4 bg-slate-50 rounded-lg">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-slate-600">Current yearly HR cost</span>
+                  <span className="text-lg font-bold text-slate-900">${yearlyHRCost.toLocaleString()}</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Results */}
+          <Card className="border-0 shadow-xl bg-gradient-to-br from-emerald-600 to-teal-600 text-white">
+            <CardContent className="p-8">
+              <h3 className="text-lg font-semibold text-emerald-100 mb-6">Your Savings with PayPilot</h3>
+
+              <div className="space-y-6">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
+                    <Clock className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-emerald-100 text-sm">Time saved per year</p>
+                    <p className="text-3xl font-bold">{timeSavedHours.toFixed(0)} hours</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
+                    <TrendingDown className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-emerald-100 text-sm">HR cost reduction</p>
+                    <p className="text-3xl font-bold">60%</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
+                    <DollarSign className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-emerald-100 text-sm">Net yearly savings</p>
+                    <p className="text-3xl font-bold">${netSavings > 0 ? netSavings.toLocaleString() : 0}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-8 p-4 bg-white/10 rounded-lg">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-emerald-100">PayPilot cost</span>
+                  <span className="font-medium">${paypilotYearlyCost.toLocaleString()}/year</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-emerald-100">ROI</span>
+                  <span className="font-bold text-xl">{Number(roi) > 0 ? `${roi}%` : 'Positive'}</span>
+                </div>
+              </div>
+
+              <Link href="/signup" className="block mt-6">
+                <Button className="w-full bg-white text-emerald-700 hover:bg-emerald-50 font-semibold">
+                  Start Saving Now
+                  <ChevronRight className="w-4 h-4 ml-2" />
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </section>
+  )
+}
 
 export default function LandingPage() {
   return (
@@ -234,6 +400,9 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* ROI Calculator Section */}
+      <ROICalculator />
 
       {/* AI Section */}
       <section id="ai" className="py-20 px-4">
