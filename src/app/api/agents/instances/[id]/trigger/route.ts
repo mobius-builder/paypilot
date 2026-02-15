@@ -1,13 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { getAuthContext } from '@/lib/api-auth'
-import {
-  DEMO_EMPLOYEES,
-  DEMO_AGENT_INSTANCES,
-  addDemoMessage,
-  addDynamicDemoConversation,
-  DEMO_COMPANY_ID,
-} from '@/lib/demo-context'
 import { generateInitialMessage, isAnthropicConfigured } from '@/lib/anthropic'
 
 // POST /api/agents/instances/[id]/trigger - Manually trigger agent (Run button)
@@ -34,79 +27,6 @@ export async function POST(
     const body = await request.json().catch(() => ({}))
     const targetEmployees = body.target_employees as string[] | undefined
 
-    // Demo mode handling
-    if (authContext.isDemo) {
-      // Find the agent instance
-      const agentInstance = DEMO_AGENT_INSTANCES.find(a => a.id === id)
-      if (!agentInstance) {
-        return NextResponse.json({ error: 'Agent instance not found' }, { status: 404 })
-      }
-
-      // Get target employees (specific list or all)
-      const employees = targetEmployees && targetEmployees.length > 0
-        ? DEMO_EMPLOYEES.filter(e => targetEmployees.includes(e.id))
-        : DEMO_EMPLOYEES
-
-      let messagesSent = 0
-      let conversationsTouched = 0
-
-      // For each target employee, create/update conversation and send message
-      for (const employee of employees) {
-        const conversationId = `demo-conv-${id}-${employee.id}`
-
-        // Generate personalized opening message
-        let openingMessage: string
-        if (isAnthropicConfigured()) {
-          try {
-            openingMessage = await generateInitialMessage({
-              employeeName: employee.full_name,
-              agentType: agentInstance.agent_type,
-              tonePreset: 'friendly_peer',
-            })
-          } catch {
-            openingMessage = `Hey ${employee.full_name.split(' ')[0]}! Quick check-in - how's your week going so far? 🙂`
-          }
-        } else {
-          openingMessage = `Hey ${employee.full_name.split(' ')[0]}! Quick check-in - how's your week going so far? 🙂`
-        }
-
-        // Create conversation in demo store
-        addDynamicDemoConversation({
-          id: conversationId,
-          company_id: DEMO_COMPANY_ID,
-          agent_instance_id: id,
-          participant_user_id: employee.id,
-          status: 'active',
-          unread_count: 1,
-          message_count: 1,
-          last_message_at: new Date().toISOString(),
-          agent_instances: {
-            id: agentInstance.id,
-            name: agentInstance.name,
-            agents: {
-              name: agentInstance.agents.name,
-              agent_type: agentInstance.agent_type,
-            },
-          },
-        } as typeof import('@/lib/demo-context').DEMO_CONVERSATIONS[0])
-
-        // Add message to conversation
-        addDemoMessage(conversationId, openingMessage, 'agent')
-
-        messagesSent++
-        conversationsTouched++
-      }
-
-      return NextResponse.json({
-        success: true,
-        run_id: `demo-run-${Date.now()}`,
-        messages_sent: messagesSent,
-        conversations_touched: conversationsTouched,
-        message: `Agent triggered successfully. Sent ${messagesSent} messages to ${conversationsTouched} employees.`,
-      })
-    }
-
-    // Real Supabase mode
     const supabase = await createClient()
 
     // Verify instance exists and belongs to company

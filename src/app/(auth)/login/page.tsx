@@ -12,19 +12,21 @@ import { toast } from 'sonner'
 import { PayPilotLogo } from '@/components/logo'
 import { createClient } from '@/lib/supabase/client'
 
-// Demo credentials for easy testing
+// Real demo credentials (must be seeded in Supabase)
 const DEMO_USERS = {
   admin: {
     email: 'demo@acme.com',
     password: 'demo123',
     name: 'Demo Admin',
     role: 'owner',
+    description: 'Full access: create & run agents',
   },
   employee: {
     email: 'sarah.chen@acme.com',
     password: 'demo123',
     name: 'Sarah Chen',
     role: 'member',
+    description: 'Employee view: messages only',
   },
 }
 
@@ -33,13 +35,6 @@ export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
-
-  const setDemoCookie = (email: string) => {
-    // Set demo mode cookies (expires in 24 hours)
-    const expires = new Date(Date.now() + 24 * 60 * 60 * 1000).toUTCString()
-    document.cookie = `paypilot_demo_mode=true; path=/; expires=${expires}`
-    document.cookie = `paypilot_demo_email=${email}; path=/; expires=${expires}`
-  }
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -54,48 +49,7 @@ export default function LoginPage() {
       })
 
       if (error) {
-        // Check if it's one of our demo credentials
-        const adminCreds = DEMO_USERS.admin
-        const employeeCreds = DEMO_USERS.employee
-
-        if ((email === adminCreds.email || email === 'demo@paypilot.com') && (password === adminCreds.password || password === 'demo123456')) {
-          // Admin demo mode
-          setDemoCookie(adminCreds.email)
-          localStorage.setItem('paypilot_demo_session', JSON.stringify({
-            user: {
-              id: 'demo-admin-001',
-              email: adminCreds.email,
-              name: adminCreds.name,
-              role: adminCreds.role,
-              company: 'Acme Technologies',
-              isAdmin: true,
-            },
-            expiresAt: Date.now() + 24 * 60 * 60 * 1000
-          }))
-          toast.success(`Welcome, ${adminCreds.name}! (Admin Mode)`)
-          router.push('/dashboard')
-          return
-        }
-
-        if (email === employeeCreds.email && password === employeeCreds.password) {
-          // Employee demo mode (Sarah Chen)
-          setDemoCookie(employeeCreds.email)
-          localStorage.setItem('paypilot_demo_session', JSON.stringify({
-            user: {
-              id: 'demo-employee-sarah',
-              email: employeeCreds.email,
-              name: employeeCreds.name,
-              role: employeeCreds.role,
-              company: 'Acme Technologies',
-              isAdmin: false,
-            },
-            expiresAt: Date.now() + 24 * 60 * 60 * 1000
-          }))
-          toast.success(`Welcome, ${employeeCreds.name}! (Employee Mode)`)
-          router.push('/messages') // Employees land on messages
-          return
-        }
-
+        console.error('Login error:', error)
         toast.error(error.message || 'Invalid credentials')
         setLoading(false)
         return
@@ -103,7 +57,12 @@ export default function LoginPage() {
 
       if (data.user) {
         toast.success('Welcome back!')
-        router.push('/dashboard')
+        // Redirect based on user - employees go to messages, admins go to dashboard
+        if (email === DEMO_USERS.employee.email) {
+          router.push('/messages')
+        } else {
+          router.push('/dashboard')
+        }
       }
     } catch (err) {
       console.error('Login error:', err)
@@ -138,7 +97,7 @@ export default function LoginPage() {
             <div>
               <p className="text-sm font-medium text-foreground">Try Demo Mode</p>
               <p className="text-sm text-muted-foreground">
-                Choose a role to explore PayPilot
+                Click a role to fill credentials, then sign in
               </p>
             </div>
           </div>
@@ -150,8 +109,8 @@ export default function LoginPage() {
             >
               <Shield className="w-4 h-4 text-primary" />
               <div className="text-left">
-                <div className="font-medium">HR Admin</div>
-                <div className="text-xs text-muted-foreground">demo@acme.com</div>
+                <div className="font-medium">{DEMO_USERS.admin.name}</div>
+                <div className="text-xs text-muted-foreground">{DEMO_USERS.admin.description}</div>
               </div>
             </button>
             <button
@@ -161,8 +120,8 @@ export default function LoginPage() {
             >
               <User className="w-4 h-4 text-green-500" />
               <div className="text-left">
-                <div className="font-medium">Employee</div>
-                <div className="text-xs text-muted-foreground">sarah.chen@acme.com</div>
+                <div className="font-medium">{DEMO_USERS.employee.name}</div>
+                <div className="text-xs text-muted-foreground">{DEMO_USERS.employee.description}</div>
               </div>
             </button>
           </div>

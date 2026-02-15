@@ -58,11 +58,6 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Demo mode - return demo instances
-    if (auth.isDemo) {
-      return NextResponse.json({ instances: DEMO_INSTANCES })
-    }
-
     const supabase = await createClient()
 
     // Get agent instances with related data
@@ -135,22 +130,6 @@ export async function POST(request: Request) {
     // Validate required fields
     if (!body.agent_id || !body.name || !body.config || !body.schedule) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
-    }
-
-    // Demo mode - return fake success
-    if (auth.isDemo) {
-      const fakeInstance = {
-        id: crypto.randomUUID(),
-        company_id: auth.companyId,
-        agent_id: body.agent_id,
-        created_by: auth.userId,
-        name: body.name,
-        config: body.config,
-        status: 'active',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      }
-      return NextResponse.json({ instance: fakeInstance })
     }
 
     const supabase = await createClient()

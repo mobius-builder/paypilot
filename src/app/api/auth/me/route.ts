@@ -15,7 +15,6 @@ export async function GET() {
       companyId: authContext.companyId,
       role: authContext.role,
       isAdmin: authContext.isAdmin,
-      isDemo: authContext.isDemo,
       fullName: authContext.fullName,
       email: authContext.email,
     })

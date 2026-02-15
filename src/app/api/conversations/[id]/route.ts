@@ -1,7 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { getAuthContext } from '@/lib/api-auth'
-import { getDemoConversation, getDemoMessages } from '@/lib/demo-context'
 
 // GET /api/conversations/[id] - Get conversation with messages
 export async function GET(
@@ -16,21 +15,6 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Demo mode - return mock conversation and messages
-    if (authContext.isDemo) {
-      const conversation = getDemoConversation(id)
-      if (!conversation) {
-        return NextResponse.json({ error: 'Conversation not found' }, { status: 404 })
-      }
-      const messages = getDemoMessages(id)
-      return NextResponse.json({
-        conversation,
-        messages,
-        summary: null,
-      })
-    }
-
-    // Real Supabase query
     const supabase = await createClient()
 
     // Get conversation

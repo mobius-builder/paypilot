@@ -1,20 +1,20 @@
 import { createClient } from '@/lib/supabase/server'
-import { DEMO_CONTEXT, SARAH_CONTEXT, getDemoContextByEmail, isAdminRole, DemoRole } from '@/lib/demo-context'
-import { cookies } from 'next/headers'
 
 export interface AuthContext {
   userId: string
   companyId: string
   role: string
-  isDemo: boolean
   isAdmin: boolean // True for owner, admin, hr_manager
   fullName?: string
   email?: string
 }
 
+// Admin roles that can manage agents
+const ADMIN_ROLES = ['owner', 'admin', 'hr_manager']
+
 /**
  * Get authentication context for API routes.
- * Supports both real Supabase auth and demo mode.
+ * Uses real Supabase auth - no demo mode fallback.
  *
  * Returns null if not authenticated.
  */
@@ -23,120 +23,49 @@ export async function getAuthContext(): Promise<AuthContext | null> {
     const supabase = await createClient()
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 
-    if (!authError && user) {
-      // Real authenticated user - look up their company membership
-      const { data: membership, error: membershipError } = await supabase
-        .from('company_members')
-        .select('company_id, role')
-        .eq('user_id', user.id)
-        .single()
-
-      if (membershipError) {
-        console.log('[Auth] Membership lookup failed:', {
-          userId: user.id,
-          error: membershipError.code,
-          message: membershipError.message
-        })
-      }
-
-      if (membership) {
-        return {
-          userId: user.id,
-          companyId: membership.company_id,
-          role: membership.role,
-          isDemo: false,
-          isAdmin: isAdminRole(membership.role as DemoRole),
-          email: user.email,
-        }
-      }
-
-      // User exists but has no company membership
-      // Check if it's a known demo email
-      if (user.email) {
-        const demoContext = getDemoContextByEmail(user.email)
-        if (demoContext) {
-          console.log('[Auth] Demo user detected:', user.email)
-          return {
-            userId: demoContext.userId,
-            companyId: demoContext.companyId,
-            role: demoContext.role,
-            isDemo: true,
-            isAdmin: demoContext.isAdmin,
-            fullName: demoContext.fullName,
-            email: demoContext.email,
-          }
-        }
-      }
-
-      console.log('[Auth] Authenticated user has no company membership:', user.id)
+    if (authError || !user) {
+      console.log('[Auth] No authenticated user')
       return null
     }
 
-    // No Supabase auth - check for demo mode cookie
-    const cookieStore = await cookies()
-    const demoSession = cookieStore.get('paypilot_demo_mode')
-    const demoEmail = cookieStore.get('paypilot_demo_email')
+    // Look up company membership
+    const { data: membership, error: membershipError } = await supabase
+      .from('company_members')
+      .select('company_id, role, job_title')
+      .eq('user_id', user.id)
+      .single()
 
-    if (demoSession?.value === 'true') {
-      // Get demo context for specific user if email cookie is set
-      if (demoEmail?.value) {
-        const demoContext = getDemoContextByEmail(demoEmail.value)
-        if (demoContext) {
-          return {
-            userId: demoContext.userId,
-            companyId: demoContext.companyId,
-            role: demoContext.role,
-            isDemo: true,
-            isAdmin: demoContext.isAdmin,
-            fullName: demoContext.fullName,
-            email: demoContext.email,
-          }
-        }
-      }
-
-      // Default to admin demo user
-      return {
-        userId: DEMO_CONTEXT.userId,
-        companyId: DEMO_CONTEXT.companyId,
-        role: DEMO_CONTEXT.role,
-        isDemo: true,
-        isAdmin: DEMO_CONTEXT.isAdmin,
-        fullName: DEMO_CONTEXT.fullName,
-        email: DEMO_CONTEXT.email,
-      }
+    if (membershipError) {
+      console.log('[Auth] Membership lookup failed:', {
+        userId: user.id,
+        error: membershipError.code,
+        message: membershipError.message
+      })
+      return null
     }
 
-    // Default to demo mode for development if no auth is present
-    if (process.env.NODE_ENV === 'development' || process.env.PAYPILOT_DEMO_MODE === 'true') {
-      console.log('[Auth] No auth detected, falling back to demo mode')
-      return {
-        userId: DEMO_CONTEXT.userId,
-        companyId: DEMO_CONTEXT.companyId,
-        role: DEMO_CONTEXT.role,
-        isDemo: true,
-        isAdmin: DEMO_CONTEXT.isAdmin,
-        fullName: DEMO_CONTEXT.fullName,
-        email: DEMO_CONTEXT.email,
-      }
+    if (!membership) {
+      console.log('[Auth] User has no company membership:', user.id)
+      return null
     }
 
-    return null
+    // Get profile for full name
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('full_name')
+      .eq('id', user.id)
+      .single()
+
+    return {
+      userId: user.id,
+      companyId: membership.company_id,
+      role: membership.role,
+      isAdmin: ADMIN_ROLES.includes(membership.role),
+      email: user.email,
+      fullName: profile?.full_name,
+    }
   } catch (error) {
     console.error('[Auth] Error getting auth context:', error)
-
-    // Fallback to demo mode on error in development
-    if (process.env.NODE_ENV === 'development') {
-      return {
-        userId: DEMO_CONTEXT.userId,
-        companyId: DEMO_CONTEXT.companyId,
-        role: DEMO_CONTEXT.role,
-        isDemo: true,
-        isAdmin: DEMO_CONTEXT.isAdmin,
-        fullName: DEMO_CONTEXT.fullName,
-        email: DEMO_CONTEXT.email,
-      }
-    }
-
     return null
   }
 }

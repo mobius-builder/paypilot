@@ -78,14 +78,6 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Demo mode - return demo agents
-    if (auth.isDemo) {
-      return NextResponse.json({
-        agents: DEMO_AGENTS,
-        tonePresets: DEMO_TONE_PRESETS,
-      })
-    }
-
     const supabase = await createClient()
 
     // Get system agent templates

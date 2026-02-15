@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getAuthContext } from '@/lib/api-auth'
-import { searchDemoEmployees } from '@/lib/demo-context'
 
 export async function GET(request: NextRequest) {
   try {
@@ -21,13 +20,6 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // If in demo mode, use demo employees
-    if (auth.isDemo) {
-      const employees = searchDemoEmployees(query, limit)
-      return NextResponse.json({ employees })
-    }
-
-    // Real Supabase query with RLS
     const supabase = await createClient()
 
     // Query employees in the user's company

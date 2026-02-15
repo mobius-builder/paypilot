@@ -1,8 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { getAuthContext } from '@/lib/api-auth'
-import { getDemoConversation, getDemoMessages, addDemoMessage } from '@/lib/demo-context'
-import { generateAgentResponse, isAnthropicConfigured, AgentContext } from '@/lib/anthropic'
 import { orchestrator } from '@/lib/agents'
 
 // POST /api/conversations/[id]/messages - Send employee message
@@ -30,72 +28,6 @@ export async function POST(
       return NextResponse.json({ error: 'Message too long' }, { status: 400 })
     }
 
-    // Demo mode - handle with mock data and real Claude responses
-    if (authContext.isDemo) {
-      const conversation = getDemoConversation(conversationId)
-      if (!conversation) {
-        return NextResponse.json({ error: 'Conversation not found' }, { status: 404 })
-      }
-
-      // Save the employee message
-      addDemoMessage(conversationId, content.trim(), 'employee')
-
-      // Generate AI response using Claude if available
-      let responseText = ''
-      let escalated = false
-
-      if (isAnthropicConfigured()) {
-        try {
-          // Get conversation history
-          const existingMessages = getDemoMessages(conversationId)
-          const conversationHistory = existingMessages.map(m => ({
-            role: m.sender_type === 'employee' ? 'user' as const : 'assistant' as const,
-            content: m.content,
-          }))
-
-          const agentContext: AgentContext = {
-            employeeName: 'Demo User',
-            agentType: conversation.agent_instances?.agents?.agent_type || 'pulse_check',
-            tonePreset: 'friendly_peer',
-            conversationHistory,
-          }
-
-          const response = await generateAgentResponse(agentContext)
-          responseText = response.content
-          escalated = response.shouldEscalate
-
-        } catch (error) {
-          console.error('Demo mode Claude error:', error)
-          // Fallback response
-          responseText = "Thanks for sharing that! Is there anything else on your mind?"
-        }
-      } else {
-        // Fallback response without Claude
-        const fallbackResponses = [
-          "Thanks for sharing! What's been the highlight of your week?",
-          "I hear you. Would you like to tell me more about that?",
-          "That's helpful to know. How are you feeling about things overall?",
-          "Got it! Is there anything specific you'd like to discuss?",
-        ]
-        responseText = fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)]
-      }
-
-      // Save the agent response
-      const agentMessage = addDemoMessage(conversationId, responseText, 'agent')
-
-      return NextResponse.json({
-        success: true,
-        escalated,
-        response: {
-          id: agentMessage.id,
-          content: agentMessage.content,
-          sender_type: agentMessage.sender_type,
-          created_at: agentMessage.created_at,
-        },
-      })
-    }
-
-    // Real Supabase mode
     const supabase = await createClient()
 
     // Verify conversation exists and user has access
@@ -161,16 +93,6 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Demo mode
-    if (authContext.isDemo) {
-      const messages = getDemoMessages(conversationId)
-      return NextResponse.json({
-        messages,
-        next_cursor: null,
-      })
-    }
-
-    // Real Supabase mode
     const supabase = await createClient()
 
     // Get conversation to verify access

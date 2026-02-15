@@ -37,21 +37,6 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Demo mode - return mock response
-    if (auth.isDemo) {
-      const demoResponse = getDemoResponse(message_content)
-      return NextResponse.json({
-        response: demoResponse,
-        message: {
-          id: crypto.randomUUID(),
-          conversation_id,
-          content: demoResponse.content,
-          sender_type: 'agent',
-          created_at: new Date().toISOString(),
-        },
-      })
-    }
-
     const supabase = await createClient()
 
     // Get conversation with agent instance details
