@@ -34,11 +34,14 @@ import {
   ChevronRight,
   Download,
   Play,
-  FileText
+  FileText,
+  Loader2
 } from 'lucide-react'
+import { toast } from 'sonner'
+import { canTransitionPayroll, type PayrollStatus } from '@/lib/state-machines'
 
 // Demo payroll data
-const payrollRuns = [
+const initialPayrollRuns = [
   {
     id: '1',
     payPeriod: 'Feb 2-15, 2026',
@@ -48,7 +51,8 @@ const payrollRuns = [
     taxes: 31212,
     deductions: 18727,
     netPay: 74911,
-    status: 'pending_approval'
+    status: 'pending_approval' as PayrollStatus,
+    hasAllCalculations: true
   },
   {
     id: '2',
@@ -59,7 +63,8 @@ const payrollRuns = [
     taxes: 30375,
     deductions: 18225,
     netPay: 72900,
-    status: 'completed'
+    status: 'completed' as PayrollStatus,
+    hasAllCalculations: true
   },
   {
     id: '3',
@@ -70,7 +75,8 @@ const payrollRuns = [
     taxes: 29550,
     deductions: 17730,
     netPay: 70920,
-    status: 'completed'
+    status: 'completed' as PayrollStatus,
+    hasAllCalculations: true
   }
 ]
 
@@ -83,9 +89,160 @@ const currentPayrollEmployees = [
   { id: '6', name: 'Alex Wong', avatar: 'AW', department: 'Marketing', regularHours: 80, overtimeHours: 0, grossPay: 2885, taxes: 721, deductions: 433, netPay: 1731 },
 ]
 
+// Current Payroll Card Component with status-based styling
+function CurrentPayrollCard({ payroll, onApprove }: { payroll: typeof initialPayrollRuns[0]; onApprove: () => void }) {
+  const statusConfig = {
+    pending_approval: {
+      borderColor: 'border-amber-200',
+      bgColor: 'bg-amber-50/50',
+      iconBg: 'bg-amber-100',
+      iconColor: 'text-amber-600',
+      icon: AlertTriangle,
+      title: 'Payroll Pending Approval',
+      action: (
+        <Button onClick={onApprove} className="bg-emerald-600 hover:bg-emerald-700">
+          <CheckCircle2 className="w-4 h-4 mr-2" />
+          Approve & Submit
+        </Button>
+      )
+    },
+    approved: {
+      borderColor: 'border-blue-200',
+      bgColor: 'bg-blue-50/50',
+      iconBg: 'bg-blue-100',
+      iconColor: 'text-blue-600',
+      icon: CheckCircle2,
+      title: 'Payroll Approved',
+      action: <Badge className="bg-blue-100 text-blue-700">Approved</Badge>
+    },
+    processing: {
+      borderColor: 'border-violet-200',
+      bgColor: 'bg-violet-50/50',
+      iconBg: 'bg-violet-100',
+      iconColor: 'text-violet-600',
+      icon: Loader2,
+      title: 'Payroll Processing',
+      action: <Badge className="bg-violet-100 text-violet-700">Processing</Badge>,
+      iconAnimate: true
+    },
+    completed: {
+      borderColor: 'border-emerald-200',
+      bgColor: 'bg-emerald-50/50',
+      iconBg: 'bg-emerald-100',
+      iconColor: 'text-emerald-600',
+      icon: CheckCircle2,
+      title: 'Payroll Completed',
+      action: <Badge className="bg-emerald-100 text-emerald-700">Completed</Badge>
+    }
+  }
+
+  const config = statusConfig[payroll.status as keyof typeof statusConfig] || statusConfig.pending_approval
+  const IconComponent = config.icon
+
+  return (
+    <Card className={`border-2 ${config.borderColor} ${config.bgColor}`}>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className={`w-10 h-10 ${config.iconBg} rounded-lg flex items-center justify-center`}>
+              <IconComponent className={`w-5 h-5 ${config.iconColor} ${'iconAnimate' in config ? 'animate-spin' : ''}`} />
+            </div>
+            <div>
+              <CardTitle>{config.title}</CardTitle>
+              <CardDescription>Pay period: {payroll.payPeriod} | Pay date: {payroll.payDate}</CardDescription>
+            </div>
+          </div>
+          {config.action}
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+          <div className="p-4 bg-white rounded-lg border">
+            <p className="text-sm text-slate-500">Gross Pay</p>
+            <p className="text-xl font-semibold text-slate-900">${payroll.grossPay.toLocaleString()}</p>
+          </div>
+          <div className="p-4 bg-white rounded-lg border">
+            <p className="text-sm text-slate-500">Total Taxes</p>
+            <p className="text-xl font-semibold text-red-600">-${payroll.taxes.toLocaleString()}</p>
+          </div>
+          <div className="p-4 bg-white rounded-lg border">
+            <p className="text-sm text-slate-500">Deductions</p>
+            <p className="text-xl font-semibold text-amber-600">-${payroll.deductions.toLocaleString()}</p>
+          </div>
+          <div className="p-4 bg-white rounded-lg border border-emerald-200 bg-emerald-50">
+            <p className="text-sm text-emerald-600">Net Pay</p>
+            <p className="text-xl font-semibold text-emerald-700">${payroll.netPay.toLocaleString()}</p>
+          </div>
+        </div>
+        <div className="mb-4">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-sm font-medium text-slate-700">Payroll Progress</p>
+            <p className="text-sm text-slate-500">{payroll.employees} of {payroll.employees} employees calculated</p>
+          </div>
+          <Progress value={100} className="h-2" />
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
 export default function PayrollPage() {
   const [approveDialogOpen, setApproveDialogOpen] = useState(false)
-  const [selectedPayroll, setSelectedPayroll] = useState<typeof payrollRuns[0] | null>(null)
+  const [selectedPayroll, setSelectedPayroll] = useState<typeof initialPayrollRuns[0] | null>(null)
+  const [payrollRuns, setPayrollRuns] = useState(initialPayrollRuns)
+  const [isProcessing, setIsProcessing] = useState(false)
+
+  // Handle payroll approval with state machine validation
+  const handleApprovePayroll = async () => {
+    if (!selectedPayroll) return
+
+    const result = canTransitionPayroll(selectedPayroll.status, 'approved', {
+      payrollId: selectedPayroll.id,
+      employeeCount: selectedPayroll.employees,
+      totalAmount: selectedPayroll.grossPay,
+      approverRole: 'admin', // Current user is admin in demo
+      hasAllCalculations: selectedPayroll.hasAllCalculations,
+    })
+
+    if (!result.allowed) {
+      toast.error(`Cannot approve payroll: ${result.reason}`)
+      setApproveDialogOpen(false)
+      return
+    }
+
+    setIsProcessing(true)
+
+    // Simulate processing
+    await new Promise(resolve => setTimeout(resolve, 1500))
+
+    // Transition to approved
+    setPayrollRuns(prev => prev.map(run =>
+      run.id === selectedPayroll.id ? { ...run, status: 'approved' as PayrollStatus } : run
+    ))
+
+    toast.success(`Payroll approved! Processing ${selectedPayroll.employees} employees for $${selectedPayroll.netPay.toLocaleString()}`)
+
+    // Simulate transition to processing
+    await new Promise(resolve => setTimeout(resolve, 1000))
+
+    setPayrollRuns(prev => prev.map(run =>
+      run.id === selectedPayroll.id ? { ...run, status: 'processing' as PayrollStatus } : run
+    ))
+
+    toast.info('Processing payroll...')
+
+    // Simulate completion
+    await new Promise(resolve => setTimeout(resolve, 2000))
+
+    setPayrollRuns(prev => prev.map(run =>
+      run.id === selectedPayroll.id ? { ...run, status: 'completed' as PayrollStatus } : run
+    ))
+
+    toast.success('Payroll processing complete! Payments scheduled.')
+    setIsProcessing(false)
+    setApproveDialogOpen(false)
+    setSelectedPayroll(null)
+  }
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -188,53 +345,10 @@ export default function PayrollPage() {
       </div>
 
       {/* Current Payroll Card */}
-      <Card className="border-2 border-amber-200 bg-amber-50/50">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
-                <AlertTriangle className="w-5 h-5 text-amber-600" />
-              </div>
-              <div>
-                <CardTitle>Payroll Pending Approval</CardTitle>
-                <CardDescription>Pay period: Feb 2-15, 2026 | Pay date: Feb 20, 2026</CardDescription>
-              </div>
-            </div>
-            <Button onClick={() => handleApprove(payrollRuns[0])} className="bg-emerald-600 hover:bg-emerald-700">
-              <CheckCircle2 className="w-4 h-4 mr-2" />
-              Approve & Submit
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-            <div className="p-4 bg-white rounded-lg border">
-              <p className="text-sm text-slate-500">Gross Pay</p>
-              <p className="text-xl font-semibold text-slate-900">$124,850</p>
-            </div>
-            <div className="p-4 bg-white rounded-lg border">
-              <p className="text-sm text-slate-500">Total Taxes</p>
-              <p className="text-xl font-semibold text-red-600">-$31,212</p>
-            </div>
-            <div className="p-4 bg-white rounded-lg border">
-              <p className="text-sm text-slate-500">Deductions</p>
-              <p className="text-xl font-semibold text-amber-600">-$18,727</p>
-            </div>
-            <div className="p-4 bg-white rounded-lg border border-emerald-200 bg-emerald-50">
-              <p className="text-sm text-emerald-600">Net Pay</p>
-              <p className="text-xl font-semibold text-emerald-700">$74,911</p>
-            </div>
-          </div>
-
-          <div className="mb-4">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-sm font-medium text-slate-700">Payroll Progress</p>
-              <p className="text-sm text-slate-500">47 of 47 employees calculated</p>
-            </div>
-            <Progress value={100} className="h-2" />
-          </div>
-        </CardContent>
-      </Card>
+      <CurrentPayrollCard
+        payroll={payrollRuns[0]}
+        onApprove={() => handleApprove(payrollRuns[0])}
+      />
 
       {/* Tabs for current payroll details and history */}
       <Tabs defaultValue="current" className="space-y-4">
@@ -377,12 +491,25 @@ export default function PayrollPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setApproveDialogOpen(false)}>
+            <Button variant="outline" onClick={() => setApproveDialogOpen(false)} disabled={isProcessing}>
               Cancel
             </Button>
-            <Button className="bg-emerald-600 hover:bg-emerald-700">
-              <CheckCircle2 className="w-4 h-4 mr-2" />
-              Approve & Process
+            <Button
+              className="bg-emerald-600 hover:bg-emerald-700"
+              onClick={handleApprovePayroll}
+              disabled={isProcessing}
+            >
+              {isProcessing ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 className="w-4 h-4 mr-2" />
+                  Approve & Process
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
