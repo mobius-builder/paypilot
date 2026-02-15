@@ -18,6 +18,11 @@ export const metadata: Metadata = {
   description: "Modern HR and payroll platform powered by AI. Automate payroll, manage benefits, track time, and get instant answers to HR questions.",
   keywords: ["HR software", "payroll", "AI HR", "benefits administration", "time tracking", "PTO management"],
   authors: [{ name: "PayPilot" }],
+  icons: {
+    icon: "/favicon.svg",
+    shortcut: "/favicon.svg",
+    apple: "/favicon.svg",
+  },
   openGraph: {
     title: "PayPilot - AI-Native HR & Payroll",
     description: "The modern HR platform with AI at its core. Automate payroll, manage benefits, and let employees get instant answers.",
