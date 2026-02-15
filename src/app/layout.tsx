@@ -19,8 +19,11 @@ export const metadata: Metadata = {
   keywords: ["HR software", "payroll", "AI HR", "benefits administration", "time tracking", "PTO management"],
   authors: [{ name: "PayPilot" }],
   icons: {
-    icon: "/icon.png",
-    shortcut: "/icon.png",
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/icon.png", type: "image/png", sizes: "512x512" },
+    ],
+    shortcut: "/favicon.svg",
     apple: "/icon.png",
   },
   openGraph: {
