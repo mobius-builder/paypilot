@@ -1,16 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 
-const stripe = process.env.STRIPE_SECRET_KEY
-  ? new Stripe(process.env.STRIPE_SECRET_KEY)
-  : null
+// Initialize Stripe lazily with trimmed key
+function getStripe(): Stripe | null {
+  const key = process.env.STRIPE_SECRET_KEY?.trim()
+  if (!key) return null
+  return new Stripe(key, { typescript: true })
+}
 
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
+const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET?.trim()
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.text()
     const signature = req.headers.get('stripe-signature')
+
+    const stripe = getStripe()
 
     if (!stripe || !webhookSecret) {
       console.log('Stripe webhook not configured')
