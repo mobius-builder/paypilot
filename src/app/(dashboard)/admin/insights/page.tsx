@@ -105,16 +105,16 @@ const PRIORITY_COLORS = {
 }
 
 const TAG_COLORS: Record<string, string> = {
-  workload: 'bg-orange-100 text-orange-700',
-  manager: 'bg-purple-100 text-purple-700',
-  compensation: 'bg-green-100 text-green-700',
-  culture: 'bg-blue-100 text-blue-700',
-  tooling: 'bg-gray-100 text-gray-700',
-  growth: 'bg-indigo-100 text-indigo-700',
-  work_life_balance: 'bg-pink-100 text-pink-700',
-  communication: 'bg-cyan-100 text-cyan-700',
-  team_dynamics: 'bg-teal-100 text-teal-700',
-  recognition: 'bg-amber-100 text-amber-700',
+  workload: 'bg-accent text-primary',
+  manager: 'bg-accent text-primary',
+  compensation: 'bg-accent text-primary',
+  culture: 'bg-accent text-primary',
+  tooling: 'bg-accent/50 text-muted-foreground',
+  growth: 'bg-accent text-primary',
+  work_life_balance: 'bg-accent text-primary',
+  communication: 'bg-accent text-primary',
+  team_dynamics: 'bg-accent text-primary',
+  recognition: 'bg-accent text-primary',
 }
 
 export default function InsightsPage() {

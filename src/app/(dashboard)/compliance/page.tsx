@@ -190,11 +190,11 @@ const STATUS_CONFIG = {
 }
 
 const CATEGORY_CONFIG = {
-  tax: { icon: FileText, color: 'bg-indigo-100 text-indigo-700' },
-  employment: { icon: Users, color: 'bg-purple-100 text-purple-700' },
-  benefits: { icon: Shield, color: 'bg-emerald-100 text-emerald-700' },
-  safety: { icon: AlertTriangle, color: 'bg-orange-100 text-orange-700' },
-  reporting: { icon: TrendingUp, color: 'bg-cyan-100 text-cyan-700' },
+  tax: { icon: FileText, color: 'bg-accent text-primary' },
+  employment: { icon: Users, color: 'bg-accent text-primary' },
+  benefits: { icon: Shield, color: 'bg-accent text-primary' },
+  safety: { icon: AlertTriangle, color: 'bg-accent text-primary' },
+  reporting: { icon: TrendingUp, color: 'bg-accent text-primary' },
 }
 
 const PRIORITY_CONFIG = {
@@ -565,8 +565,8 @@ export default function CompliancePage() {
         </Card>
         <Card className="hover:shadow-md transition-shadow cursor-pointer">
           <CardContent className="p-6 flex items-center gap-4">
-            <div className="p-3 rounded-lg bg-emerald-100">
-              <Users className="h-6 w-6 text-emerald-600" />
+            <div className="p-3 rounded-lg bg-accent">
+              <Users className="h-6 w-6 text-primary" />
             </div>
             <div>
               <h3 className="font-medium">Training Status</h3>
