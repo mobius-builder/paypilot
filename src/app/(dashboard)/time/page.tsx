@@ -295,11 +295,11 @@ export default function TimePage() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'pending':
-        return <Badge className="bg-amber-100 text-amber-700"><Hourglass className="w-3 h-3 mr-1" />Pending</Badge>
+        return <Badge className="bg-secondary text-muted-foreground"><Hourglass className="w-3 h-3 mr-1" />Pending</Badge>
       case 'approved':
-        return <Badge className="bg-emerald-100 text-emerald-700"><CheckCircle2 className="w-3 h-3 mr-1" />Approved</Badge>
+        return <Badge className="bg-accent text-primary"><CheckCircle2 className="w-3 h-3 mr-1" />Approved</Badge>
       case 'denied':
-        return <Badge className="bg-red-100 text-red-700"><XCircle className="w-3 h-3 mr-1" />Denied</Badge>
+        return <Badge className="bg-destructive/10 text-destructive"><XCircle className="w-3 h-3 mr-1" />Denied</Badge>
       default:
         return <Badge variant="secondary">{status}</Badge>
     }
@@ -310,9 +310,9 @@ export default function TimePage() {
       case 'pto':
         return <Plane className="w-4 h-4 text-primary" />
       case 'sick':
-        return <Stethoscope className="w-4 h-4 text-red-500" />
+        return <Stethoscope className="w-4 h-4 text-destructive" />
       default:
-        return <Sun className="w-4 h-4 text-amber-500" />
+        return <Sun className="w-4 h-4 text-muted-foreground" />
     }
   }
 
@@ -323,14 +323,14 @@ export default function TimePage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Time & PTO</h1>
-          <p className="text-slate-600">Track time, manage PTO requests, and view balances</p>
+          <h1 className="text-2xl font-bold text-foreground">Time & PTO</h1>
+          <p className="text-muted-foreground">Track time, manage PTO requests, and view balances</p>
         </div>
         <div className="flex gap-2">
           <Button
             variant={isClockedIn ? "default" : "outline"}
             onClick={handleClockToggle}
-            className={isClockedIn ? "bg-emerald-600 hover:bg-emerald-700" : ""}
+            className={isClockedIn ? "bg-primary hover:bg-primary/90" : ""}
           >
             <Clock className="w-4 h-4 mr-2" />
             {isClockedIn ? 'Clock Out' : 'Clock In'}
@@ -447,8 +447,8 @@ export default function TimePage() {
                 <Sun className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-slate-900">96</p>
-                <p className="text-sm text-slate-500">PTO Hours Left</p>
+                <p className="text-2xl font-bold text-foreground">96</p>
+                <p className="text-sm text-muted-foreground">PTO Hours Left</p>
               </div>
             </div>
           </CardContent>
@@ -460,8 +460,8 @@ export default function TimePage() {
                 <Stethoscope className="w-5 h-5 text-red-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-slate-900">32</p>
-                <p className="text-sm text-slate-500">Sick Hours Left</p>
+                <p className="text-2xl font-bold text-foreground">32</p>
+                <p className="text-sm text-muted-foreground">Sick Hours Left</p>
               </div>
             </div>
           </CardContent>
@@ -473,8 +473,8 @@ export default function TimePage() {
                 <Hourglass className="w-5 h-5 text-amber-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-slate-900">{pendingRequests.length}</p>
-                <p className="text-sm text-slate-500">Pending Requests</p>
+                <p className="text-2xl font-bold text-foreground">{pendingRequests.length}</p>
+                <p className="text-sm text-muted-foreground">Pending Requests</p>
               </div>
             </div>
           </CardContent>
@@ -482,14 +482,14 @@ export default function TimePage() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
-                <Clock className="w-5 h-5 text-emerald-600" />
+              <div className="w-10 h-10 bg-accent rounded-lg flex items-center justify-center">
+                <Clock className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-slate-900">
+                <p className="text-2xl font-bold text-foreground">
                   {timeEntries.reduce((sum, e) => sum + e.totalHours, 0).toFixed(1)}
                 </p>
-                <p className="text-sm text-slate-500">Hours This Week</p>
+                <p className="text-sm text-muted-foreground">Hours This Week</p>
               </div>
             </div>
           </CardContent>
@@ -537,7 +537,7 @@ export default function TimePage() {
                               </Avatar>
                               <div>
                                 <p className="font-medium">{request.employee}</p>
-                                <p className="text-xs text-slate-500">{request.reason}</p>
+                                <p className="text-xs text-muted-foreground">{request.reason}</p>
                               </div>
                             </div>
                           </TableCell>
@@ -567,7 +567,7 @@ export default function TimePage() {
                                 </Button>
                                 <Button
                                   size="sm"
-                                  className="bg-emerald-600 hover:bg-emerald-700"
+                                  className="bg-primary hover:bg-primary/90"
                                   onClick={(e) => { e.stopPropagation(); handleApprove(request.id) }}
                                 >
                                   <CheckCircle2 className="w-4 h-4" />
@@ -653,9 +653,9 @@ export default function TimePage() {
                             </div>
                           </TableCell>
                           <TableCell className="text-right font-medium text-primary">{emp.ptoBalance}h</TableCell>
-                          <TableCell className="text-right text-slate-500">{emp.ptoUsed}h</TableCell>
+                          <TableCell className="text-right text-muted-foreground">{emp.ptoUsed}h</TableCell>
                           <TableCell className="text-right font-medium text-red-600">{emp.sickBalance}h</TableCell>
-                          <TableCell className="text-right text-slate-500">{emp.sickUsed}h</TableCell>
+                          <TableCell className="text-right text-muted-foreground">{emp.sickUsed}h</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -694,10 +694,10 @@ export default function TimePage() {
                 </Avatar>
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-sm">Rachel Kim</p>
-                  <p className="text-xs text-slate-500">On leave until Feb 21</p>
+                  <p className="text-xs text-muted-foreground">On leave until Feb 21</p>
                 </div>
               </div>
-              <div className="text-center py-4 text-slate-500">
+              <div className="text-center py-4 text-muted-foreground">
                 <Users className="w-8 h-8 mx-auto mb-2 text-slate-300" />
                 <p className="text-sm">No other team members out</p>
               </div>
