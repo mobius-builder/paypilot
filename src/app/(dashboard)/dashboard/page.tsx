@@ -20,6 +20,7 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
+import { CompanyPulse } from '@/components/company-pulse'
 
 // Demo data
 const stats = [
@@ -281,41 +282,9 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* Activity and AI Assistant */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent Activity */}
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
-            <CardDescription>Latest updates from your team</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {recentActivity.map((activity) => (
-                <div key={activity.id} className="flex items-center gap-4">
-                  <div className={`w-2 h-2 rounded-full ${
-                    activity.status === 'pending' ? 'bg-amber-500' :
-                    activity.status === 'approved' ? 'bg-emerald-500' : 'bg-blue-500'
-                  }`} />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-slate-900">
-                      <span className="font-medium">{activity.user}</span>
-                      {' '}{activity.action}
-                    </p>
-                    <p className="text-xs text-slate-500">{activity.time}</p>
-                  </div>
-                  <Badge variant="secondary" className={
-                    activity.status === 'pending' ? 'bg-amber-100 text-amber-700' :
-                    activity.status === 'approved' ? 'bg-emerald-100 text-emerald-700' :
-                    'bg-accent text-primary'
-                  }>
-                    {activity.status}
-                  </Badge>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+      {/* Company Pulse Widget */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <CompanyPulse />
 
         {/* AI Assistant Quick Access */}
         <Card className="bg-foreground text-white">
@@ -351,6 +320,42 @@ export default function DashboardPage() {
                 Open AI Assistant
               </Button>
             </Link>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Recent Activity */}
+      <div className="grid grid-cols-1 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Activity</CardTitle>
+            <CardDescription>Latest updates from your team</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {recentActivity.map((activity) => (
+                <div key={activity.id} className="flex items-center gap-4">
+                  <div className={`w-2 h-2 rounded-full ${
+                    activity.status === 'pending' ? 'bg-amber-500' :
+                    activity.status === 'approved' ? 'bg-emerald-500' : 'bg-blue-500'
+                  }`} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-slate-900">
+                      <span className="font-medium">{activity.user}</span>
+                      {' '}{activity.action}
+                    </p>
+                    <p className="text-xs text-slate-500">{activity.time}</p>
+                  </div>
+                  <Badge variant="secondary" className={
+                    activity.status === 'pending' ? 'bg-amber-100 text-amber-700' :
+                    activity.status === 'approved' ? 'bg-emerald-100 text-emerald-700' :
+                    'bg-accent text-primary'
+                  }>
+                    {activity.status}
+                  </Badge>
+                </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
       </div>

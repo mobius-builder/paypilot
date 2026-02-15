@@ -46,6 +46,7 @@ import {
   Bot,
   MessageCircle,
   Sparkles,
+  ClipboardCheck,
 } from 'lucide-react'
 import { PayPilotLogo } from '@/components/logo'
 import { createClient } from '@/lib/supabase/client'
@@ -65,6 +66,7 @@ const navigation = [
   { name: 'Payroll', href: '/payroll', icon: Calculator },
   { name: 'Time & PTO', href: '/time', icon: Clock },
   { name: 'Benefits', href: '/benefits', icon: Shield },
+  { name: 'Compliance', href: '/compliance', icon: ClipboardCheck },
   { name: 'Reports', href: '/reports', icon: BarChart3 },
   { name: 'AI Agents', href: '/agents', icon: Bot },
   { name: 'Messages', href: '/messages', icon: MessageCircle },
