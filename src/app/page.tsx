@@ -561,6 +561,36 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Trusted By Section */}
+      <section className="px-6 py-16 bg-muted/30 border-y border-border">
+        <div className="max-w-6xl mx-auto">
+          <motion.p
+            className="text-center text-sm text-muted-foreground mb-8 uppercase tracking-wider font-medium"
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+          >
+            Trusted by innovative companies
+          </motion.p>
+          <motion.div
+            className="flex flex-wrap items-center justify-center gap-8 md:gap-12"
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.2 }}
+          >
+            {['Acme Corp', 'TechFlow', 'Nexus Labs', 'Quantum AI', 'Atlas Inc', 'Forge.io'].map((company, i) => (
+              <div key={company} className="flex items-center gap-2 text-muted-foreground/60 hover:text-muted-foreground transition-colors">
+                <div className="w-8 h-8 rounded-md bg-muted-foreground/10 flex items-center justify-center text-xs font-bold">
+                  {company.charAt(0)}
+                </div>
+                <span className="font-semibold text-sm">{company}</span>
+              </div>
+            ))}
+          </motion.div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <motion.section
         className="px-6 py-20 bg-primary"
