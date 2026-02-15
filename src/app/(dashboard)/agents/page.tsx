@@ -62,28 +62,24 @@ import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
 import { toast } from 'sonner'
 import { useUser } from '@/contexts/user-context'
-import { DEMO_EMPLOYEES } from '@/lib/demo-context'
+import {
+  STATIC_EMPLOYEES,
+  STATIC_AGENT_INSTANCES,
+  AGENT_TEMPLATES,
+  AGENT_PAGE_STATS,
+  searchEmployees,
+} from '@/lib/static-demo-data'
 
 // Client-side employee search for demo mode (deterministic, no API needed)
 function searchEmployeesLocally(query: string, limit: number = 15) {
-  if (!query || query.length < 2) return []
-
-  const q = query.toLowerCase().trim()
-
-  return DEMO_EMPLOYEES
-    .filter(emp =>
-      emp.full_name.toLowerCase().includes(q) ||
-      emp.email.toLowerCase().includes(q) ||
-      emp.department.toLowerCase().includes(q)
-    )
-    .slice(0, limit)
-    .map(emp => ({
-      id: emp.id,
-      full_name: emp.full_name,
-      email: emp.email,
-      department: emp.department,
-      job_title: emp.job_title,
-    }))
+  const results = searchEmployees(query, limit)
+  return results.map(emp => ({
+    id: emp.id,
+    full_name: emp.name,
+    email: emp.email,
+    department: emp.department,
+    job_title: emp.title,
+  }))
 }
 
 interface Agent {
@@ -216,6 +212,68 @@ export default function AgentsPage() {
   const fetchData = async () => {
     setIsLoading(true)
     try {
+      // Check for demo mode - use static data for reliability
+      const isDemoMode = typeof document !== 'undefined' &&
+        document.cookie.includes('paypilot_demo_mode=true')
+
+      if (isDemoMode) {
+        // Use static data - transform STATIC_AGENT_INSTANCES to page format
+        const staticInstances: AgentInstance[] = STATIC_AGENT_INSTANCES.map(inst => {
+          const template = AGENT_TEMPLATES.find(t => t.id === inst.agentType)
+          return {
+            id: inst.id,
+            name: inst.name,
+            status: inst.status as 'active' | 'paused',
+            config: {
+              tone_preset: inst.tone,
+              audience_type: inst.audienceType,
+            },
+            created_at: inst.createdAt,
+            agents: {
+              id: template?.id || inst.agentType,
+              name: template?.name || inst.name,
+              slug: inst.agentType,
+              description: template?.description || '',
+              agent_type: inst.agentType,
+            },
+            agent_schedules: [{
+              cadence: 'weekly',
+              next_run_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+            }],
+            stats: {
+              conversations: inst.conversationsCount,
+              messages: inst.conversationsCount * 6, // Avg 6 messages per conversation
+            },
+          }
+        })
+        setInstances(staticInstances)
+
+        // Use static agents from AGENT_TEMPLATES
+        const staticAgents: Agent[] = AGENT_TEMPLATES.map(t => ({
+          id: t.id,
+          name: t.name,
+          slug: t.id,
+          description: t.description,
+          agent_type: t.id,
+        }))
+        setAgents(staticAgents)
+
+        // Static tone presets
+        setTonePresets([
+          { id: 'friendly', slug: 'friendly', name: 'Friendly', description: 'Warm and approachable' },
+          { id: 'professional', slug: 'professional', name: 'Professional', description: 'Formal and business-like' },
+          { id: 'casual', slug: 'casual', name: 'Casual', description: 'Relaxed and informal' },
+          { id: 'empathetic', slug: 'empathetic', name: 'Empathetic', description: 'Understanding and supportive' },
+        ])
+
+        if (staticAgents.length > 0) {
+          setSelectedAgentId(staticAgents[0].id)
+        }
+        setIsLoading(false)
+        return
+      }
+
+      // API calls for real mode
       const [instancesRes, agentsRes] = await Promise.all([
         fetch('/api/agents/instances'),
         fetch('/api/agents'),

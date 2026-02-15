@@ -1,7 +1,14 @@
 'use client'
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
-import { getDemoContextByEmail, isAdminRole, type DemoContext, DEMO_CONTEXT, SARAH_CONTEXT } from '@/lib/demo-context'
+import {
+  getDemoContextByEmail,
+  isAdminRole,
+  type DemoUserContext,
+  ADMIN_CONTEXT,
+  SARAH_CONTEXT,
+  STATIC_EMPLOYEES,
+} from '@/lib/static-demo-data'
 
 export interface UserSession {
   userId: string
@@ -27,7 +34,7 @@ interface UserContextType {
 const UserContext = createContext<UserContextType | undefined>(undefined)
 
 // Get stored demo session from cookie
-function getDemoSessionFromCookie(): DemoContext | null {
+function getDemoSessionFromCookie(): DemoUserContext | null {
   if (typeof document === 'undefined') return null
 
   const cookies = document.cookie.split(';').reduce((acc, c) => {
@@ -85,8 +92,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
           companyName: demoContext.companyName,
           isAdmin: demoContext.isAdmin,
           initials,
-          // Link to employee ID for non-admin users
-          employeeId: !demoContext.isAdmin ? 'emp_001' : undefined, // Sarah is emp_001
+          // Link to employee ID from context
+          employeeId: demoContext.employeeId || undefined,
         })
         setIsLoading(false)
         return
@@ -118,7 +125,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
         }
       } else {
         // Default to demo admin if no auth
-        const initials = DEMO_CONTEXT.fullName
+        const initials = ADMIN_CONTEXT.fullName
           .split(' ')
           .map(n => n[0])
           .join('')
@@ -126,13 +133,13 @@ export function UserProvider({ children }: { children: ReactNode }) {
           .toUpperCase()
 
         setUser({
-          userId: DEMO_CONTEXT.userId,
-          email: DEMO_CONTEXT.email,
-          fullName: DEMO_CONTEXT.fullName,
-          role: DEMO_CONTEXT.role,
-          companyId: DEMO_CONTEXT.companyId,
-          companyName: DEMO_CONTEXT.companyName,
-          isAdmin: DEMO_CONTEXT.isAdmin,
+          userId: ADMIN_CONTEXT.userId,
+          email: ADMIN_CONTEXT.email,
+          fullName: ADMIN_CONTEXT.fullName,
+          role: ADMIN_CONTEXT.role,
+          companyId: ADMIN_CONTEXT.companyId,
+          companyName: ADMIN_CONTEXT.companyName,
+          isAdmin: ADMIN_CONTEXT.isAdmin,
           initials,
         })
       }
@@ -140,13 +147,13 @@ export function UserProvider({ children }: { children: ReactNode }) {
       console.error('Error fetching user:', error)
       // Default to demo admin on error
       setUser({
-        userId: DEMO_CONTEXT.userId,
-        email: DEMO_CONTEXT.email,
-        fullName: DEMO_CONTEXT.fullName,
-        role: DEMO_CONTEXT.role,
-        companyId: DEMO_CONTEXT.companyId,
-        companyName: DEMO_CONTEXT.companyName,
-        isAdmin: DEMO_CONTEXT.isAdmin,
+        userId: ADMIN_CONTEXT.userId,
+        email: ADMIN_CONTEXT.email,
+        fullName: ADMIN_CONTEXT.fullName,
+        role: ADMIN_CONTEXT.role,
+        companyId: ADMIN_CONTEXT.companyId,
+        companyName: ADMIN_CONTEXT.companyName,
+        isAdmin: ADMIN_CONTEXT.isAdmin,
         initials: 'DA',
       })
     } finally {
