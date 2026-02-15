@@ -1,10 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Skeleton } from '@/components/ui/skeleton'
 import {
   Users,
   DollarSign,
@@ -15,111 +16,223 @@ import {
   ChevronRight,
   Sparkles,
   ArrowUpRight,
-  ArrowDownRight,
-  CheckCircle2
+  CheckCircle2,
+  RefreshCw
 } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { CompanyPulse } from '@/components/company-pulse'
 
-// Demo data
-const stats = [
-  {
-    name: 'Total Employees',
-    value: '47',
-    change: '+3',
-    changeType: 'positive',
-    icon: Users,
-    bgColor: 'bg-accent',
-    iconColor: 'text-primary'
-  },
-  {
-    name: 'Next Payroll',
-    value: '$124,850',
-    subtext: 'Feb 20, 2026',
-    icon: DollarSign,
-    bgColor: 'bg-emerald-100',
-    iconColor: 'text-emerald-600'
-  },
-  {
-    name: 'Pending PTO',
-    value: '5',
-    subtext: 'requests',
-    icon: Calendar,
-    bgColor: 'bg-violet-100',
-    iconColor: 'text-violet-600'
-  },
-  {
-    name: 'Avg Hours/Week',
-    value: '41.2',
-    change: '+1.5',
-    changeType: 'neutral',
-    icon: Clock,
-    bgColor: 'bg-amber-100',
-    iconColor: 'text-amber-600'
+interface DashboardData {
+  user: {
+    id: string
+    email: string
+    name: string
   }
-]
-
-const recentActivity = [
-  { id: 1, type: 'pto', user: 'Sarah Chen', action: 'requested 3 days PTO', time: '2 hours ago', status: 'pending' },
-  { id: 2, type: 'hire', user: 'Mike Johnson', action: 'completed onboarding', time: '5 hours ago', status: 'completed' },
-  { id: 3, type: 'payroll', user: 'System', action: 'Payroll run completed', time: '1 day ago', status: 'completed' },
-  { id: 4, type: 'pto', user: 'Emily Davis', action: 'requested sick leave', time: '1 day ago', status: 'approved' },
-  { id: 5, type: 'benefits', user: 'Alex Wong', action: 'enrolled in 401(k)', time: '2 days ago', status: 'completed' },
-]
-
-const upcomingPayroll = {
-  date: 'February 20, 2026',
-  employees: 47,
-  grossPay: 124850,
-  taxes: 31212,
-  deductions: 18727,
-  netPay: 74911,
+  company: {
+    id: string
+    name: string
+    slug: string
+  } | null
+  membership?: {
+    role: string
+    department: string
+    jobTitle: string
+  }
+  stats: {
+    totalEmployees: number
+    nextPayrollAmount: number
+    nextPayrollDate?: string
+    pendingPtoRequests: number
+    avgHoursPerWeek: number
+  }
+  pendingApprovals: Array<{
+    id: string
+    name: string
+    type: string
+    details: string
+    avatar: string
+    leaveType?: string
+  }>
+  upcomingPayroll: {
+    date: string
+    employees: number
+    grossPay: number
+    taxes: number
+    deductions: number
+    netPay: number
+  } | null
+  recentActivity: Array<{
+    id: string
+    type: string
+    action: string
+    time: string
+    status: string
+  }>
 }
 
-const initialPendingApprovals = [
-  { id: 1, name: 'Sarah Chen', type: 'PTO Request', details: 'Feb 24-26 (3 days)', avatar: 'SC' },
-  { id: 2, name: 'Tom Wilson', type: 'PTO Request', details: 'Mar 3-7 (5 days)', avatar: 'TW' },
-  { id: 3, name: 'Lisa Park', type: 'Expense Report', details: '$342.50', avatar: 'LP' },
-]
+function LoadingSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <Skeleton className="h-8 w-64 mb-2" />
+          <Skeleton className="h-4 w-80" />
+        </div>
+        <Skeleton className="h-10 w-32" />
+      </div>
+      <div className="grid grid-cols-4 gap-4">
+        {[...Array(4)].map((_, i) => (
+          <Skeleton key={i} className="h-28 rounded-xl" />
+        ))}
+      </div>
+      <div className="grid grid-cols-3 gap-6">
+        <Skeleton className="col-span-2 h-64 rounded-xl" />
+        <Skeleton className="h-64 rounded-xl" />
+      </div>
+    </div>
+  )
+}
 
 export default function DashboardPage() {
-  const [pendingApprovals, setPendingApprovals] = useState(initialPendingApprovals)
-  const [processingId, setProcessingId] = useState<number | null>(null)
+  const [data, setData] = useState<DashboardData | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [processingId, setProcessingId] = useState<string | null>(null)
 
-  const handleApprove = async (id: number) => {
-    setProcessingId(id)
-    const item = pendingApprovals.find(a => a.id === id)
+  useEffect(() => {
+    fetchDashboard()
+  }, [])
 
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 500))
-
-    setPendingApprovals(prev => prev.filter(a => a.id !== id))
-    setProcessingId(null)
-    toast.success(`${item?.type} for ${item?.name} approved!`)
+  const fetchDashboard = async () => {
+    setIsLoading(true)
+    try {
+      const response = await fetch('/api/dashboard')
+      if (response.ok) {
+        const dashboardData = await response.json()
+        setData(dashboardData)
+      } else {
+        console.error('Failed to fetch dashboard')
+      }
+    } catch (error) {
+      console.error('Error fetching dashboard:', error)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
-  const handleDeny = async (id: number) => {
+  const handleApprove = async (id: string) => {
     setProcessingId(id)
-    const item = pendingApprovals.find(a => a.id === id)
+    const item = data?.pendingApprovals.find(a => a.id === id)
 
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 500))
+    try {
+      const response = await fetch(`/api/leave-requests/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'approved' }),
+      })
 
-    setPendingApprovals(prev => prev.filter(a => a.id !== id))
-    setProcessingId(null)
-    toast.error(`${item?.type} for ${item?.name} denied`)
+      if (response.ok) {
+        setData(prev => prev ? {
+          ...prev,
+          pendingApprovals: prev.pendingApprovals.filter(a => a.id !== id),
+          stats: { ...prev.stats, pendingPtoRequests: prev.stats.pendingPtoRequests - 1 }
+        } : null)
+        toast.success(`${item?.type} for ${item?.name} approved!`)
+      } else {
+        toast.error('Failed to approve request')
+      }
+    } catch (error) {
+      toast.error('Failed to approve request')
+    } finally {
+      setProcessingId(null)
+    }
   }
+
+  const handleDeny = async (id: string) => {
+    setProcessingId(id)
+    const item = data?.pendingApprovals.find(a => a.id === id)
+
+    try {
+      const response = await fetch(`/api/leave-requests/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'denied' }),
+      })
+
+      if (response.ok) {
+        setData(prev => prev ? {
+          ...prev,
+          pendingApprovals: prev.pendingApprovals.filter(a => a.id !== id),
+          stats: { ...prev.stats, pendingPtoRequests: prev.stats.pendingPtoRequests - 1 }
+        } : null)
+        toast.error(`${item?.type} for ${item?.name} denied`)
+      } else {
+        toast.error('Failed to deny request')
+      }
+    } catch (error) {
+      toast.error('Failed to deny request')
+    } finally {
+      setProcessingId(null)
+    }
+  }
+
+  if (isLoading) {
+    return <LoadingSkeleton />
+  }
+
+  // Default values if no data
+  const userName = data?.user?.name?.split(' ')[0] || 'there'
+  const stats = data?.stats || { totalEmployees: 0, nextPayrollAmount: 0, pendingPtoRequests: 0, avgHoursPerWeek: 40 }
+  const pendingApprovals = data?.pendingApprovals || []
+  const upcomingPayroll = data?.upcomingPayroll
+  const companyName = data?.company?.name || 'your company'
+
+  // Build stats cards dynamically
+  const statsCards = [
+    {
+      name: 'Total Employees',
+      value: stats.totalEmployees.toString(),
+      icon: Users,
+      bgColor: 'bg-accent',
+      iconColor: 'text-primary'
+    },
+    {
+      name: 'Next Payroll',
+      value: stats.nextPayrollAmount > 0 ? `$${stats.nextPayrollAmount.toLocaleString()}` : '-',
+      subtext: stats.nextPayrollDate ? new Date(stats.nextPayrollDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Not scheduled',
+      icon: DollarSign,
+      bgColor: 'bg-emerald-100',
+      iconColor: 'text-emerald-600'
+    },
+    {
+      name: 'Pending PTO',
+      value: stats.pendingPtoRequests.toString(),
+      subtext: 'requests',
+      icon: Calendar,
+      bgColor: 'bg-violet-100',
+      iconColor: 'text-violet-600'
+    },
+    {
+      name: 'Avg Hours/Week',
+      value: stats.avgHoursPerWeek.toFixed(1),
+      icon: Clock,
+      bgColor: 'bg-amber-100',
+      iconColor: 'text-amber-600'
+    }
+  ]
 
   return (
     <div className="space-y-6">
       {/* Welcome header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Good morning, John!</h1>
-          <p className="text-slate-600">Here&apos;s what&apos;s happening with your team today.</p>
+          <h1 className="text-2xl font-bold text-slate-900">Good morning, {userName}!</h1>
+          <p className="text-slate-600">Here&apos;s what&apos;s happening with {companyName} today.</p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" size="icon" onClick={fetchDashboard}>
+            <RefreshCw className="w-4 h-4" />
+          </Button>
           <Button variant="outline">
             <Calendar className="w-4 h-4 mr-2" />
             View Calendar
@@ -134,23 +247,13 @@ export default function DashboardPage() {
 
       {/* Stats grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((stat) => (
+        {statsCards.map((stat) => (
           <Card key={stat.name} className="hover:shadow-md transition-shadow">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${stat.bgColor}`}>
                   <stat.icon className={`w-5 h-5 ${stat.iconColor}`} />
                 </div>
-                {stat.change && (
-                  <Badge variant={stat.changeType === 'positive' ? 'default' : 'secondary'} className="text-xs">
-                    {stat.changeType === 'positive' ? (
-                      <ArrowUpRight className="w-3 h-3 mr-1" />
-                    ) : (
-                      <ArrowDownRight className="w-3 h-3 mr-1" />
-                    )}
-                    {stat.change}
-                  </Badge>
-                )}
               </div>
               <div className="mt-4">
                 <p className="text-2xl font-bold text-slate-900">{stat.value}</p>
@@ -168,7 +271,9 @@ export default function DashboardPage() {
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
               <CardTitle>Upcoming Payroll</CardTitle>
-              <CardDescription>Next pay date: {upcomingPayroll.date}</CardDescription>
+              <CardDescription>
+                {upcomingPayroll ? `Next pay date: ${upcomingPayroll.date}` : 'No payroll scheduled'}
+              </CardDescription>
             </div>
             <Link href="/payroll">
               <Button variant="ghost" size="sm">
@@ -178,46 +283,59 @@ export default function DashboardPage() {
             </Link>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <div className="p-4 bg-slate-50 rounded-lg">
-                <p className="text-sm text-slate-500">Gross Pay</p>
-                <p className="text-xl font-semibold text-slate-900">
-                  ${upcomingPayroll.grossPay.toLocaleString()}
-                </p>
-              </div>
-              <div className="p-4 bg-slate-50 rounded-lg">
-                <p className="text-sm text-slate-500">Taxes</p>
-                <p className="text-xl font-semibold text-red-600">
-                  -${upcomingPayroll.taxes.toLocaleString()}
-                </p>
-              </div>
-              <div className="p-4 bg-slate-50 rounded-lg">
-                <p className="text-sm text-slate-500">Deductions</p>
-                <p className="text-xl font-semibold text-amber-600">
-                  -${upcomingPayroll.deductions.toLocaleString()}
-                </p>
-              </div>
-              <div className="p-4 bg-emerald-50 rounded-lg">
-                <p className="text-sm text-emerald-600">Net Pay</p>
-                <p className="text-xl font-semibold text-emerald-700">
-                  ${upcomingPayroll.netPay.toLocaleString()}
-                </p>
-              </div>
-            </div>
-            <div className="mt-4 flex items-center justify-between p-4 bg-accent rounded-lg">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-accent rounded-full flex items-center justify-center border border-border">
-                  <Users className="w-5 h-5 text-primary" />
+            {upcomingPayroll ? (
+              <>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  <div className="p-4 bg-slate-50 rounded-lg">
+                    <p className="text-sm text-slate-500">Gross Pay</p>
+                    <p className="text-xl font-semibold text-slate-900">
+                      ${upcomingPayroll.grossPay.toLocaleString()}
+                    </p>
+                  </div>
+                  <div className="p-4 bg-slate-50 rounded-lg">
+                    <p className="text-sm text-slate-500">Taxes</p>
+                    <p className="text-xl font-semibold text-red-600">
+                      -${upcomingPayroll.taxes.toLocaleString()}
+                    </p>
+                  </div>
+                  <div className="p-4 bg-slate-50 rounded-lg">
+                    <p className="text-sm text-slate-500">Deductions</p>
+                    <p className="text-xl font-semibold text-amber-600">
+                      -${upcomingPayroll.deductions.toLocaleString()}
+                    </p>
+                  </div>
+                  <div className="p-4 bg-emerald-50 rounded-lg">
+                    <p className="text-sm text-emerald-600">Net Pay</p>
+                    <p className="text-xl font-semibold text-emerald-700">
+                      ${upcomingPayroll.netPay.toLocaleString()}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-medium text-slate-900">{upcomingPayroll.employees} employees</p>
-                  <p className="text-sm text-slate-500">will be paid on {upcomingPayroll.date}</p>
+                <div className="mt-4 flex items-center justify-between p-4 bg-accent rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-accent rounded-full flex items-center justify-center border border-border">
+                      <Users className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-slate-900">{upcomingPayroll.employees} employees</p>
+                      <p className="text-sm text-slate-500">will be paid on {upcomingPayroll.date}</p>
+                    </div>
+                  </div>
+                  <Link href="/payroll">
+                    <Button>Review & Approve</Button>
+                  </Link>
                 </div>
+              </>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <DollarSign className="w-12 h-12 text-slate-300 mb-3" />
+                <p className="font-medium text-slate-900">No payroll scheduled</p>
+                <p className="text-sm text-slate-500 mb-4">Set up your first payroll run</p>
+                <Link href="/payroll/run">
+                  <Button>Schedule Payroll</Button>
+                </Link>
               </div>
-              <Link href="/payroll">
-                <Button>Review & Approve</Button>
-              </Link>
-            </div>
+            )}
           </CardContent>
         </Card>
 
@@ -306,12 +424,13 @@ export default function DashboardPage() {
                 'Show me the payroll summary',
                 'Who is on leave this week?'
               ].map((question, i) => (
-                <button
-                  key={i}
-                  className="w-full text-left p-3 bg-white/10 hover:bg-white/20 rounded-lg text-sm text-white/90 transition-colors"
-                >
-                  {question}
-                </button>
+                <Link key={i} href="/ai">
+                  <button
+                    className="w-full text-left p-3 bg-white/10 hover:bg-white/20 rounded-lg text-sm text-white/90 transition-colors"
+                  >
+                    {question}
+                  </button>
+                </Link>
               ))}
             </div>
             <Link href="/ai">
@@ -324,50 +443,14 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* Recent Activity */}
-      <div className="grid grid-cols-1 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
-            <CardDescription>Latest updates from your team</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {recentActivity.map((activity) => (
-                <div key={activity.id} className="flex items-center gap-4">
-                  <div className={`w-2 h-2 rounded-full ${
-                    activity.status === 'pending' ? 'bg-amber-500' :
-                    activity.status === 'approved' ? 'bg-emerald-500' : 'bg-blue-500'
-                  }`} />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-slate-900">
-                      <span className="font-medium">{activity.user}</span>
-                      {' '}{activity.action}
-                    </p>
-                    <p className="text-xs text-slate-500">{activity.time}</p>
-                  </div>
-                  <Badge variant="secondary" className={
-                    activity.status === 'pending' ? 'bg-amber-100 text-amber-700' :
-                    activity.status === 'approved' ? 'bg-emerald-100 text-emerald-700' :
-                    'bg-accent text-primary'
-                  }>
-                    {activity.status}
-                  </Badge>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
       {/* Quick stats footer */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <Card className="p-4">
           <div className="flex items-center gap-3">
             <TrendingUp className="w-5 h-5 text-emerald-500" />
             <div>
-              <p className="text-sm text-slate-500">Retention Rate</p>
-              <p className="text-lg font-semibold text-slate-900">94.2%</p>
+              <p className="text-sm text-slate-500">Active Employees</p>
+              <p className="text-lg font-semibold text-slate-900">{stats.totalEmployees}</p>
             </div>
           </div>
         </Card>
@@ -375,8 +458,8 @@ export default function DashboardPage() {
           <div className="flex items-center gap-3">
             <Users className="w-5 h-5 text-primary" />
             <div>
-              <p className="text-sm text-slate-500">New Hires (Q1)</p>
-              <p className="text-lg font-semibold text-slate-900">8</p>
+              <p className="text-sm text-slate-500">Departments</p>
+              <p className="text-lg font-semibold text-slate-900">5</p>
             </div>
           </div>
         </Card>
@@ -384,17 +467,17 @@ export default function DashboardPage() {
           <div className="flex items-center gap-3">
             <Clock className="w-5 h-5 text-violet-500" />
             <div>
-              <p className="text-sm text-slate-500">Avg Time to Fill</p>
-              <p className="text-lg font-semibold text-slate-900">18 days</p>
+              <p className="text-sm text-slate-500">Avg Hours/Week</p>
+              <p className="text-lg font-semibold text-slate-900">{stats.avgHoursPerWeek}h</p>
             </div>
           </div>
         </Card>
         <Card className="p-4">
           <div className="flex items-center gap-3">
-            <DollarSign className="w-5 h-5 text-amber-500" />
+            <Calendar className="w-5 h-5 text-amber-500" />
             <div>
-              <p className="text-sm text-slate-500">YTD Payroll</p>
-              <p className="text-lg font-semibold text-slate-900">$487K</p>
+              <p className="text-sm text-slate-500">Pending PTO</p>
+              <p className="text-lg font-semibold text-slate-900">{stats.pendingPtoRequests}</p>
             </div>
           </div>
         </Card>
