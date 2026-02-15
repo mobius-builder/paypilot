@@ -21,7 +21,8 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import { useUser } from '@/contexts/user-context'
-import { STATIC_CONVERSATIONS, getConversationsForUser } from '@/lib/agent-demo-data'
+import { STATIC_CONVERSATIONS, getConversationsForUser, getConversationById } from '@/lib/agent-demo-data'
+import { getDemoMessages } from '@/lib/demo-context'
 
 interface Conversation {
   id: string
@@ -121,13 +122,29 @@ export default function MessagesPage() {
     scrollToBottom()
   }, [messages])
 
-  // Fetch messages from static data
+  // Fetch messages from static data or demo-context (for runtime messages)
   const fetchMessages = async (conversationId: string) => {
     setIsLoadingMessages(true)
     try {
-      // Get messages from static data
+      // First check for runtime messages (added via demo mode messaging)
+      const runtimeMessages = getDemoMessages(conversationId)
+      if (runtimeMessages && runtimeMessages.length > 0) {
+        const msgs = runtimeMessages.map(m => ({
+          id: m.id,
+          content: m.content,
+          sender_type: m.sender_type as 'employee' | 'agent' | 'system',
+          content_type: m.content_type || 'text',
+          created_at: m.created_at,
+          is_read: m.is_read,
+        }))
+        setMessages(msgs)
+        setIsLoadingMessages(false)
+        return
+      }
+
+      // Then check static conversations
       const conv = STATIC_CONVERSATIONS.find(c => c.id === conversationId)
-      if (conv) {
+      if (conv && conv.messages && conv.messages.length > 0) {
         const msgs = conv.messages.map(m => ({
           id: m.id,
           content: m.content,
@@ -137,13 +154,18 @@ export default function MessagesPage() {
           is_read: true,
         }))
         setMessages(msgs)
+        setIsLoadingMessages(false)
+        return
+      }
+
+      // Try API fallback for real conversations
+      const res = await fetch(`/api/conversations/${conversationId}`)
+      if (res.ok) {
+        const data = await res.json()
+        setMessages(data.messages || [])
       } else {
-        // Try API fallback for dynamic conversations
-        const res = await fetch(`/api/conversations/${conversationId}`)
-        if (res.ok) {
-          const data = await res.json()
-          setMessages(data.messages || [])
-        }
+        // No messages found
+        setMessages([])
       }
     } catch (error) {
       console.error('Failed to fetch messages:', error)

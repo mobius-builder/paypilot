@@ -62,6 +62,29 @@ import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
 import { toast } from 'sonner'
 import { useUser } from '@/contexts/user-context'
+import { DEMO_EMPLOYEES } from '@/lib/demo-context'
+
+// Client-side employee search for demo mode (deterministic, no API needed)
+function searchEmployeesLocally(query: string, limit: number = 15) {
+  if (!query || query.length < 2) return []
+
+  const q = query.toLowerCase().trim()
+
+  return DEMO_EMPLOYEES
+    .filter(emp =>
+      emp.full_name.toLowerCase().includes(q) ||
+      emp.email.toLowerCase().includes(q) ||
+      emp.department.toLowerCase().includes(q)
+    )
+    .slice(0, limit)
+    .map(emp => ({
+      id: emp.id,
+      full_name: emp.full_name,
+      email: emp.email,
+      department: emp.department,
+      job_title: emp.job_title,
+    }))
+}
 
 interface Agent {
   id: string
@@ -240,8 +263,23 @@ export default function AgentsPage() {
     }
 
     setIsSearchingEmployees(true)
+
+    // Check for demo mode - use client-side filtering for reliability
+    const isDemoMode = typeof document !== 'undefined' &&
+      document.cookie.includes('paypilot_demo_mode=true')
+
+    if (isDemoMode) {
+      // Use deterministic client-side search
+      const results = searchEmployeesLocally(query.trim(), 15)
+      const selectedIds = new Set(selectedEmployees.map(e => e.id))
+      setEmployeeResults(results.filter(e => !selectedIds.has(e.id)))
+      setIsSearchingEmployees(false)
+      return
+    }
+
+    // API call for real mode
     try {
-      const res = await fetch(`/api/employees/search?q=${encodeURIComponent(query)}&limit=15`)
+      const res = await fetch(`/api/employees/search?q=${encodeURIComponent(query.trim())}&limit=15`)
       if (res.ok) {
         const data = await res.json()
         // Filter out already selected employees
@@ -260,7 +298,12 @@ export default function AgentsPage() {
   }
 
   const handleSelectEmployee = (employee: Employee) => {
-    setSelectedEmployees(prev => [...prev, employee])
+    // Prevent duplicates - only add if not already selected
+    setSelectedEmployees(prev =>
+      prev.some(e => e.id === employee.id)
+        ? prev
+        : [...prev, employee]
+    )
     setEmployeeSearch('')
     setEmployeeResults([])
     setEmployeePickerOpen(false)
