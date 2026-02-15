@@ -460,9 +460,9 @@ export default function LandingPage() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {features.map((feature) => (
-              <Card key={feature.title} className="border-0 shadow-lg hover:shadow-xl transition-shadow">
+              <Card key={feature.title} className="border-0 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer group">
                 <CardContent className="p-6">
-                  <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-lg flex items-center justify-center mb-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
                     <feature.icon className="w-6 h-6 text-blue-600" />
                   </div>
                   <h3 className="text-xl font-semibold text-slate-900 mb-2">{feature.title}</h3>
@@ -586,7 +586,7 @@ export default function LandingPage() {
                 avatar: "ER"
               }
             ].map((testimonial, i) => (
-              <Card key={i} className="border-0 shadow-lg">
+              <Card key={i} className="border-0 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
                 <CardContent className="p-6">
                   <div className="flex gap-1 mb-4">
                     {[1,2,3,4,5].map((star) => (
