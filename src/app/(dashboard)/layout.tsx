@@ -60,6 +60,14 @@ const notifications = [
   { id: 4, title: 'Benefits Update', message: '3 employees enrolled in 401(k)', time: '1 day ago', unread: false },
 ]
 
+const recentEmployees = [
+  { id: 'emp-001', name: 'Sarah Chen', role: 'Senior Engineer', department: 'Engineering' },
+  { id: 'emp-002', name: 'Marcus Johnson', role: 'Product Manager', department: 'Product' },
+  { id: 'emp-003', name: 'Emily Rodriguez', role: 'HR Manager', department: 'Human Resources' },
+  { id: 'emp-004', name: 'David Kim', role: 'Designer', department: 'Design' },
+  { id: 'emp-005', name: 'Lisa Park', role: 'Marketing Lead', department: 'Marketing' },
+]
+
 const navigation = [
   { name: 'Overview', href: '/overview', icon: LayoutGrid },
   { name: 'Employees', href: '/employees', icon: Users },
@@ -421,6 +429,28 @@ export default function DashboardLayout({
               <Calculator className="mr-2 h-3.5 w-3.5" />
               <span>Run Payroll</span>
             </CommandItem>
+          </CommandGroup>
+          <CommandGroup heading="Recent Employees">
+            {recentEmployees.map((emp) => (
+              <CommandItem
+                key={emp.id}
+                onSelect={() => {
+                  router.push(`/employees/${emp.id}`)
+                  setCommandOpen(false)
+                }}
+                className="text-sm"
+              >
+                <Avatar className="mr-2 h-5 w-5">
+                  <AvatarFallback className="text-[10px] bg-secondary">
+                    {emp.name.split(' ').map(n => n[0]).join('')}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex flex-col">
+                  <span>{emp.name}</span>
+                  <span className="text-xs text-muted-foreground">{emp.role} · {emp.department}</span>
+                </div>
+              </CommandItem>
+            ))}
           </CommandGroup>
         </CommandList>
       </CommandDialog>
