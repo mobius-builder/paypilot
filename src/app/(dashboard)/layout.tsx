@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Badge } from '@/components/ui/badge'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -47,11 +48,13 @@ import {
   Sparkles,
   ClipboardCheck,
   LayoutGrid,
+  ShieldCheck,
 } from 'lucide-react'
 import { PayPilotLogo } from '@/components/logo'
 import { KeyboardShortcutsDialog } from '@/components/keyboard-shortcuts'
 import { WhatsNewDialog } from '@/components/whats-new'
 import { DemoBanner } from '@/components/demo-banner'
+import { UserProvider, useUser } from '@/contexts/user-context'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 
@@ -70,75 +73,63 @@ const recentEmployees = [
   { id: 'emp-005', name: 'Lisa Park', role: 'Marketing Lead', department: 'Marketing' },
 ]
 
-const navigation = [
-  { name: 'Overview', href: '/overview', icon: LayoutGrid },
-  { name: 'Employees', href: '/employees', icon: Users },
-  { name: 'Org Chart', href: '/org-chart', icon: Network },
-  { name: 'Payroll', href: '/payroll', icon: Calculator },
-  { name: 'Time & PTO', href: '/time', icon: Clock },
-  { name: 'Benefits', href: '/benefits', icon: Shield },
-  { name: 'Compliance', href: '/compliance', icon: ClipboardCheck },
-  { name: 'Reports', href: '/reports', icon: BarChart3 },
-  { name: 'AI Agents', href: '/agents', icon: Bot },
-  { name: 'Messages', href: '/messages', icon: MessageCircle },
-  { name: 'Insights', href: '/admin/insights', icon: Sparkles },
-  { name: 'AI Assistant', href: '/ai', icon: MessageSquare },
-  { name: 'Settings', href: '/settings', icon: Settings },
+// Navigation items - some are admin-only
+const allNavigation = [
+  { name: 'Overview', href: '/overview', icon: LayoutGrid, adminOnly: false },
+  { name: 'Employees', href: '/employees', icon: Users, adminOnly: false },
+  { name: 'Org Chart', href: '/org-chart', icon: Network, adminOnly: false },
+  { name: 'Payroll', href: '/payroll', icon: Calculator, adminOnly: false },
+  { name: 'Time & PTO', href: '/time', icon: Clock, adminOnly: false },
+  { name: 'Benefits', href: '/benefits', icon: Shield, adminOnly: false },
+  { name: 'Compliance', href: '/compliance', icon: ClipboardCheck, adminOnly: true },
+  { name: 'Reports', href: '/reports', icon: BarChart3, adminOnly: true },
+  { name: 'AI Agents', href: '/agents', icon: Bot, adminOnly: true },
+  { name: 'Messages', href: '/messages', icon: MessageCircle, adminOnly: false },
+  { name: 'Insights', href: '/admin/insights', icon: Sparkles, adminOnly: true },
+  { name: 'AI Assistant', href: '/ai', icon: MessageSquare, adminOnly: false },
+  { name: 'Settings', href: '/settings', icon: Settings, adminOnly: false },
 ]
 
-interface UserProfile {
-  id: string
-  email: string
-  name: string
-  avatarUrl?: string
-  initials: string
+// Protected routes that require admin access
+const ADMIN_ONLY_ROUTES = ['/agents', '/admin/insights', '/compliance', '/reports']
+
+// Wrapper component to provide user context
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <UserProvider>
+      <DashboardLayoutContent>{children}</DashboardLayoutContent>
+    </UserProvider>
+  )
 }
 
-export default function DashboardLayout({
+// Actual layout content that uses the user context
+function DashboardLayoutContent({
   children,
 }: {
   children: React.ReactNode
 }) {
   const pathname = usePathname()
   const router = useRouter()
+  const { user, isAdmin, isLoading } = useUser()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [commandOpen, setCommandOpen] = useState(false)
-  const [user, setUser] = useState<UserProfile | null>(null)
 
-  // Fetch user profile on mount
+  // Filter navigation based on user role
+  const navigation = useMemo(() => {
+    return allNavigation.filter(item => !item.adminOnly || isAdmin)
+  }, [isAdmin])
+
+  // Redirect non-admins from admin-only routes
   useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const supabase = createClient()
-        const { data: { user: authUser } } = await supabase.auth.getUser()
-
-        if (authUser) {
-          const name = authUser.user_metadata?.full_name ||
-                       authUser.user_metadata?.name ||
-                       authUser.email?.split('@')[0] ||
-                       'User'
-          const initials = name
-            .split(' ')
-            .map((n: string) => n[0])
-            .join('')
-            .substring(0, 2)
-            .toUpperCase()
-
-          setUser({
-            id: authUser.id,
-            email: authUser.email || '',
-            name: name,
-            avatarUrl: authUser.user_metadata?.avatar_url || authUser.user_metadata?.picture,
-            initials: initials,
-          })
-        }
-      } catch (err) {
-        console.error('Error fetching user:', err)
-      }
+    if (!isLoading && !isAdmin && ADMIN_ONLY_ROUTES.some(route => pathname.startsWith(route))) {
+      toast.error('Access denied', { description: 'You do not have permission to view this page.' })
+      router.replace('/messages') // Redirect to messages
     }
-
-    fetchUser()
-  }, [])
+  }, [pathname, isAdmin, isLoading, router])
 
   // Cmd+K keyboard shortcut
   useEffect(() => {
@@ -279,7 +270,7 @@ export default function DashboardLayout({
           </Button>
           <Avatar className="w-7 h-7">
             {user?.avatarUrl && (
-              <AvatarImage src={user.avatarUrl} alt={user.name} />
+              <AvatarImage src={user.avatarUrl} alt={user.fullName} />
             )}
             <AvatarFallback className="bg-secondary text-foreground text-xs">
               {user?.initials || 'U'}
@@ -351,23 +342,42 @@ export default function DashboardLayout({
                 <Button variant="ghost" className="flex items-center gap-2 h-8 px-2">
                   <Avatar className="w-6 h-6">
                     {user?.avatarUrl && (
-                      <AvatarImage src={user.avatarUrl} alt={user.name} />
+                      <AvatarImage src={user.avatarUrl} alt={user.fullName} />
                     )}
                     <AvatarFallback className="bg-secondary text-foreground text-xs">
                       {user?.initials || 'U'}
                     </AvatarFallback>
                   </Avatar>
                   <span className="text-sm font-medium text-foreground">
-                    {user?.name || 'User'}
+                    {user?.fullName || 'User'}
                   </span>
+                  {isAdmin && (
+                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 bg-primary/10 text-primary border-primary/30">
+                      <ShieldCheck className="w-2.5 h-2.5 mr-0.5" />
+                      Admin
+                    </Badge>
+                  )}
+                  {!isAdmin && user && (
+                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 bg-muted text-muted-foreground border-border">
+                      Employee
+                    </Badge>
+                  )}
                   <ChevronDown className="w-3 h-3 text-muted-foreground" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56 border-border">
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">{user?.name || 'User'}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium leading-none">{user?.fullName || 'User'}</p>
+                      {isAdmin && (
+                        <Badge className="text-[10px] px-1 py-0 h-4 bg-primary text-primary-foreground">
+                          Admin
+                        </Badge>
+                      )}
+                    </div>
                     <p className="text-xs leading-none text-muted-foreground">{user?.email || ''}</p>
+                    <p className="text-xs leading-none text-muted-foreground/60 capitalize">{user?.role || 'employee'}</p>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator className="bg-border" />

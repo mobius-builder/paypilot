@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   MessageCircle,
@@ -11,6 +11,7 @@ import {
   Search,
   Clock,
   AlertCircle,
+  ShieldCheck,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -19,6 +20,8 @@ import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
+import { useUser } from '@/contexts/user-context'
+import { STATIC_CONVERSATIONS, getConversationsForUser } from '@/lib/agent-demo-data'
 
 interface Conversation {
   id: string
@@ -26,6 +29,7 @@ interface Conversation {
   unread_count: number
   message_count: number
   last_message_at: string
+  employee_name?: string // For admin to see who the conversation is with
   agent_instances: {
     id: string
     name: string
@@ -58,7 +62,7 @@ const AGENT_TYPE_COLORS: Record<string, string> = {
 }
 
 export default function MessagesPage() {
-  const [conversations, setConversations] = useState<Conversation[]>([])
+  const { user, isAdmin, isLoading: isUserLoading } = useUser()
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -68,9 +72,44 @@ export default function MessagesPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
+  // Get conversations based on user role (RBAC)
+  const conversations = useMemo(() => {
+    if (!user) return []
+
+    // Use static data filtered by user role
+    const staticConvs = getConversationsForUser(user.userId, isAdmin)
+
+    // Map to expected format
+    return staticConvs.map(c => ({
+      id: c.id,
+      status: c.status,
+      unread_count: c.unread_count,
+      message_count: c.message_count,
+      last_message_at: c.last_message_at,
+      employee_name: c.employee_name, // For admin to see who the conversation is with
+      agent_instances: {
+        id: c.agent_instance_id,
+        name: c.agent_name,
+        agents: {
+          name: c.agent_name,
+          agent_type: c.agent_instance_id === 'inst_001' ? 'pulse_check' :
+                      c.agent_instance_id === 'inst_002' ? 'onboarding' : 'pulse_check',
+        },
+      },
+      latest_message: c.messages.length > 0 ? {
+        content: c.messages[c.messages.length - 1].content,
+        sender_type: c.messages[c.messages.length - 1].sender_type,
+        created_at: c.messages[c.messages.length - 1].created_at,
+      } : undefined,
+    })) as Conversation[]
+  }, [user, isAdmin])
+
   useEffect(() => {
-    fetchConversations()
-  }, [])
+    // Set loading false once user is loaded
+    if (!isUserLoading) {
+      setIsLoading(false)
+    }
+  }, [isUserLoading])
 
   useEffect(() => {
     if (selectedConversation) {
@@ -82,35 +121,29 @@ export default function MessagesPage() {
     scrollToBottom()
   }, [messages])
 
-  const fetchConversations = async () => {
-    setIsLoading(true)
-    try {
-      const res = await fetch('/api/conversations?view=employee')
-      if (res.ok) {
-        const data = await res.json()
-        setConversations(data.conversations || [])
-      }
-    } catch (error) {
-      console.error('Failed to fetch conversations:', error)
-      toast.error('Failed to load messages')
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
+  // Fetch messages from static data
   const fetchMessages = async (conversationId: string) => {
     setIsLoadingMessages(true)
     try {
-      const res = await fetch(`/api/conversations/${conversationId}`)
-      if (res.ok) {
-        const data = await res.json()
-        setMessages(data.messages || [])
-        // Update unread count in list
-        setConversations(prev =>
-          prev.map(c =>
-            c.id === conversationId ? { ...c, unread_count: 0 } : c
-          )
-        )
+      // Get messages from static data
+      const conv = STATIC_CONVERSATIONS.find(c => c.id === conversationId)
+      if (conv) {
+        const msgs = conv.messages.map(m => ({
+          id: m.id,
+          content: m.content,
+          sender_type: m.sender_type as 'employee' | 'agent' | 'system',
+          content_type: 'text',
+          created_at: m.created_at,
+          is_read: true,
+        }))
+        setMessages(msgs)
+      } else {
+        // Try API fallback for dynamic conversations
+        const res = await fetch(`/api/conversations/${conversationId}`)
+        if (res.ok) {
+          const data = await res.json()
+          setMessages(data.messages || [])
+        }
       }
     } catch (error) {
       console.error('Failed to fetch messages:', error)
@@ -267,6 +300,12 @@ export default function MessagesPage() {
                           {conv.last_message_at ? formatTime(conv.last_message_at) : ''}
                         </span>
                       </div>
+                      {/* Show employee name for admin view */}
+                      {isAdmin && conv.employee_name && (
+                        <p className="text-xs text-primary font-medium truncate mb-0.5">
+                          with {conv.employee_name}
+                        </p>
+                      )}
                       <p className="text-sm text-muted-foreground truncate">
                         {conv.latest_message?.content || 'No messages yet'}
                       </p>
