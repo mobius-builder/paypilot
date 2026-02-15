@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import {
   Bot,
@@ -63,10 +63,8 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { toast } from 'sonner'
 import { useUser } from '@/contexts/user-context'
 import {
-  STATIC_EMPLOYEES,
   STATIC_AGENT_INSTANCES,
   AGENT_TEMPLATES,
-  AGENT_PAGE_STATS,
   searchEmployees,
 } from '@/lib/static-demo-data'
 
@@ -165,7 +163,7 @@ function useDebounce<T>(value: T, delay: number): T {
 }
 
 export default function AgentsPage() {
-  const { user, isAdmin, isLoading: isUserLoading } = useUser()
+  const { user, isAdmin } = useUser()
   const [instances, setInstances] = useState<AgentInstance[]>([])
   const [agents, setAgents] = useState<Agent[]>([])
   const [tonePresets, setTonePresets] = useState<TonePreset[]>([])

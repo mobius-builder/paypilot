@@ -1,11 +1,37 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <defs>
-    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#2563eb;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#7c3aed;stop-opacity:1" />
-    </linearGradient>
-  </defs>
-  <rect width="32" height="32" rx="6" fill="url(#grad)"/>
-  <path d="M10 8L16 12L22 8M10 16L16 20L22 16M10 24L16 20L22 24" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-  <circle cx="16" cy="16" r="3" fill="white"/>
+<svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="32" height="32" rx="6" fill="#ffffff"/>
+
+  <!-- Main wallet body - Primary green -->
+  <path
+    d="M4,7 L4,22 C4,24.5 4,25.75 5.125,26.875 C6.25,28 7.5,28 10,28 L22,28 C24.5,28 25.75,28 26.875,26.875 C28,25.75 28,24.5 28,22 L28,18 C28,15.5 28,14.25 26.875,13.125 C25.75,12 24.5,12 22,12 L8,12"
+    stroke="#1C1917"
+    stroke-width="2"
+    fill="#3A7139"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+
+  <!-- Lid - Secondary green -->
+  <path
+    d="M16,4 L18,4 C19.5,4 20.25,4 20.875,4.2 C22.5,4.65 23.8,5.95 24.25,7.575 C24.5,8.2 24.5,8.95 24.5,10.5 L24.5,12 L7.5,12 C5.5,12 4,10.5 4,8.5 C4,6.5 5.5,5 7.5,5 L12,5"
+    stroke="#1C1917"
+    stroke-width="2"
+    fill="#6B906A"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+
+  <!-- Coin - Accent gold -->
+  <circle cx="14" cy="8" r="5" fill="#F7BB71" stroke="#1C1917" stroke-width="2"/>
+
+  <!-- Dollar sign in wallet -->
+  <path
+    d="M24,18 L22,18 C21,18 20.5,18 20.1,18.1 C19.3,18.35 18.65,19 18.4,19.8 C18.3,20.2 18.3,20.7 18.3,21.5 C18.3,22.3 18.3,22.8 18.4,23.2 C18.65,24 19.3,24.65 20.1,24.9 C20.5,25 21,25 22,25 L24,25"
+    stroke="#1C1917"
+    stroke-width="1.5"
+    fill="none"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
 </svg>
