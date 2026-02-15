@@ -172,6 +172,40 @@ export default function TimePage() {
     }
 
     setPtoRequests(prev => [newRequest, ...prev])
+
+    // Send email notification to manager (async, don't block UI)
+    fetch('/api/email/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        template: 'ptoApprovalNeeded',
+        to: 'manager@acme.com', // In production, this would be the actual manager's email
+        data: {
+          managerName: 'Sarah Wilson',
+          employeeName: 'John Doe',
+          requestType: requestForm.type === 'pto' ? 'PTO' : requestForm.type === 'sick' ? 'Sick Leave' : 'Time Off',
+          dates: `${formatDate(requestForm.startDate)} - ${formatDate(requestForm.endDate)}`,
+          hours
+        }
+      })
+    }).catch(console.error)
+
+    // Send confirmation email to employee
+    fetch('/api/email/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        template: 'ptoRequestSubmitted',
+        to: 'john.doe@acme.com',
+        data: {
+          employeeName: 'John',
+          requestType: requestForm.type === 'pto' ? 'PTO' : requestForm.type === 'sick' ? 'Sick Leave' : 'Time Off',
+          dates: `${formatDate(requestForm.startDate)} - ${formatDate(requestForm.endDate)}`,
+          managerName: 'Sarah Wilson'
+        }
+      })
+    }).catch(console.error)
+
     setIsSubmitting(false)
     setRequestDialogOpen(false)
     resetRequestForm()
@@ -202,6 +236,22 @@ export default function TimePage() {
     setPtoRequests(prev => prev.map(r =>
       r.id === requestId ? { ...r, status: 'approved' as PTOStatus } : r
     ))
+
+    // Send approval email to employee (async)
+    fetch('/api/email/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        template: 'ptoApproved',
+        to: `${request.employee.toLowerCase().replace(' ', '.')}@acme.com`,
+        data: {
+          employeeName: request.employee.split(' ')[0],
+          dates: `${request.startDate} - ${request.endDate}`,
+          approverName: 'John Doe (HR Admin)'
+        }
+      })
+    }).catch(console.error)
+
     toast.success(`Approved ${request.employee}'s ${request.type.toUpperCase()} request`)
   }
 
@@ -223,6 +273,22 @@ export default function TimePage() {
     setPtoRequests(prev => prev.map(r =>
       r.id === requestId ? { ...r, status: 'denied' as PTOStatus } : r
     ))
+
+    // Send denial email to employee (async)
+    fetch('/api/email/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        template: 'ptoDenied',
+        to: `${request.employee.toLowerCase().replace(' ', '.')}@acme.com`,
+        data: {
+          employeeName: request.employee.split(' ')[0],
+          dates: `${request.startDate} - ${request.endDate}`,
+          reason: 'Please speak with your manager about alternative dates.'
+        }
+      })
+    }).catch(console.error)
+
     toast.success(`Denied ${request.employee}'s request`)
   }
 
