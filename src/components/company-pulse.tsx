@@ -33,19 +33,26 @@ interface PulseData {
 // Simulated pulse data - in production would come from API
 const MOCK_PULSE_DATA: PulseData = {
   overallMood: 'positive',
-  moodScore: 78,
+  moodScore: 82,
   trend: 'up',
-  trendDelta: 5,
-  activeConversations: 23,
+  trendDelta: 7,
+  activeConversations: 34,
   topTopics: [
     { name: 'Work-life balance', sentiment: 'positive' },
     { name: 'Team collaboration', sentiment: 'positive' },
+    { name: 'Career growth', sentiment: 'positive' },
     { name: 'Workload', sentiment: 'neutral' },
+    { name: 'Remote work', sentiment: 'positive' },
   ],
   recentSignals: [
     { emoji: '😊', text: 'Positive feedback about new wellness program', time: '2m ago' },
-    { emoji: '💬', text: 'Team discussing Q1 goals', time: '5m ago' },
-    { emoji: '🎉', text: 'Sarah celebrated work anniversary', time: '12m ago' },
+    { emoji: '💬', text: 'Engineering team discussing Q1 sprint goals', time: '5m ago' },
+    { emoji: '🎉', text: 'Sarah celebrated 3-year work anniversary', time: '12m ago' },
+    { emoji: '✨', text: 'New mentorship program getting great reviews', time: '18m ago' },
+    { emoji: '🚀', text: 'Product launch excitement in #general', time: '25m ago' },
+    { emoji: '💪', text: 'Team morale boost after successful demo', time: '32m ago' },
+    { emoji: '🤝', text: 'Cross-team collaboration praised by leadership', time: '45m ago' },
+    { emoji: '📈', text: 'Sales team celebrating record quarter', time: '1h ago' },
   ],
 }
 

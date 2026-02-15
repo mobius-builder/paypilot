@@ -18,7 +18,14 @@ import {
   ArrowRight,
   BarChart3,
   Wallet,
-  Calendar
+  Calendar,
+  DollarSign,
+  UserPlus,
+  CalendarDays,
+  Heart,
+  Bot,
+  TrendingUp,
+  type LucideIcon
 } from "lucide-react"
 
 // Animation variants
@@ -208,47 +215,50 @@ function DashboardMockup() {
   )
 }
 
-// Bento Grid Items - 2x3 layout with no gaps
-const bentoItems = [
+// Bento Grid Items - 2x3 layout with accent icons
+const bentoItems: Array<{
+  title: string
+  description: string
+  icon: LucideIcon
+  accentIcon: LucideIcon
+}> = [
   {
     title: "Automated Payroll",
     description: "Run payroll in minutes with automatic tax calculations, direct deposits, and full compliance",
     icon: Calculator,
-    visual: "payroll"
+    accentIcon: DollarSign
   },
   {
     title: "Employee Management",
     description: "Centralize all HR data in one place",
     icon: Users,
-    visual: "employees"
+    accentIcon: UserPlus
   },
   {
     title: "Time Tracking",
     description: "Track hours, PTO, and attendance",
     icon: Clock,
-    visual: "time"
+    accentIcon: CalendarDays
   },
   {
     title: "Benefits Admin",
     description: "Manage health, dental, vision, and 401(k)",
     icon: Shield,
-    visual: "benefits"
+    accentIcon: Heart
   },
   {
     title: "AI HR Assistant",
     description: "Instant answers to HR questions",
     icon: MessageSquare,
-    visual: "ai"
+    accentIcon: Bot
   },
   {
     title: "Analytics & Reports",
     description: "Insights and workforce analytics",
     icon: BarChart3,
-    visual: "analytics"
+    accentIcon: TrendingUp
   }
 ]
-
-// No visual illustrations - clean card design
 
 export default function LandingPage() {
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null)
@@ -389,7 +399,7 @@ export default function LandingPage() {
               </p>
             </motion.div>
 
-            {/* Bento Grid - Simple 3x2 layout, no gaps */}
+            {/* Bento Grid - Simple 3x2 layout */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {bentoItems.map((item, index) => (
                 <motion.div
@@ -402,8 +412,8 @@ export default function LandingPage() {
                   transition={{ delay: index * 0.08 }}
                 >
                   <Card className="h-full min-h-[180px] overflow-hidden bg-card border border-border hover:border-primary/30 transition-all duration-300">
-                    <div className="h-full p-6 flex flex-col">
-                      {/* Icon */}
+                    <div className="h-full p-6 flex flex-col relative">
+                      {/* Main Icon */}
                       <div className="w-10 h-10 rounded-lg bg-accent border border-border flex items-center justify-center mb-4 flex-shrink-0 group-hover:scale-105 transition-transform duration-300">
                         <item.icon className="w-5 h-5 text-primary" />
                       </div>
@@ -412,9 +422,14 @@ export default function LandingPage() {
                       <h3 className="font-semibold text-foreground mb-2 text-base">
                         {item.title}
                       </h3>
-                      <p className="text-muted-foreground leading-relaxed text-sm flex-grow">
+                      <p className="text-muted-foreground leading-relaxed text-sm flex-grow pr-8">
                         {item.description}
                       </p>
+
+                      {/* Accent Icon - bottom right, subtle */}
+                      <div className="absolute bottom-4 right-4 opacity-[0.08] group-hover:opacity-[0.12] transition-opacity duration-300">
+                        <item.accentIcon className="w-12 h-12 text-primary" />
+                      </div>
                     </div>
                   </Card>
                 </motion.div>

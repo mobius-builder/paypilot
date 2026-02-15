@@ -1,6 +1,124 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
+// Rich demo data for when database is empty or unavailable
+function getDemoData(user: { id: string; email?: string; user_metadata?: { full_name?: string } }) {
+  const nextPayDate = new Date()
+  nextPayDate.setDate(nextPayDate.getDate() + 5)
+
+  return {
+    user: {
+      id: user.id,
+      email: user.email || 'demo@acme.com',
+      name: user.user_metadata?.full_name || 'Alex Chen',
+    },
+    company: {
+      id: 'demo-company',
+      name: 'Acme Corporation',
+      slug: 'acme',
+    },
+    membership: {
+      role: 'admin',
+      department: 'Human Resources',
+      jobTitle: 'HR Director',
+    },
+    stats: {
+      totalEmployees: 47,
+      nextPayrollAmount: 127450,
+      nextPayrollDate: nextPayDate.toISOString(),
+      pendingPtoRequests: 5,
+      avgHoursPerWeek: 38.5,
+    },
+    pendingApprovals: [
+      {
+        id: 'pto-001',
+        name: 'Sarah Chen',
+        type: 'PTO Request',
+        details: 'Feb 20-22 (3 days)',
+        avatar: 'SC',
+        leaveType: 'vacation',
+      },
+      {
+        id: 'pto-002',
+        name: 'Marcus Johnson',
+        type: 'PTO Request',
+        details: 'Feb 25 (1 day)',
+        avatar: 'MJ',
+        leaveType: 'personal',
+      },
+      {
+        id: 'pto-003',
+        name: 'Emily Rodriguez',
+        type: 'Sick Leave',
+        details: 'Feb 18-19 (2 days)',
+        avatar: 'ER',
+        leaveType: 'sick',
+      },
+      {
+        id: 'pto-004',
+        name: 'David Kim',
+        type: 'PTO Request',
+        details: 'Mar 1-5 (5 days)',
+        avatar: 'DK',
+        leaveType: 'vacation',
+      },
+      {
+        id: 'pto-005',
+        name: 'Rachel Wong',
+        type: 'PTO Request',
+        details: 'Feb 28 (1 day)',
+        avatar: 'RW',
+        leaveType: 'personal',
+      },
+    ],
+    upcomingPayroll: {
+      date: nextPayDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+      employees: 47,
+      grossPay: 168500,
+      taxes: 42125,
+      deductions: 12450,
+      netPay: 113925,
+    },
+    recentActivity: [
+      {
+        id: 'act-1',
+        type: 'employee',
+        action: 'New employee onboarded: James Wilson',
+        time: '2 hours ago',
+        status: 'completed',
+      },
+      {
+        id: 'act-2',
+        type: 'payroll',
+        action: 'Payroll run completed - 47 employees paid',
+        time: '5 hours ago',
+        status: 'completed',
+      },
+      {
+        id: 'act-3',
+        type: 'leave',
+        action: 'PTO approved for Lisa Park',
+        time: 'Yesterday',
+        status: 'completed',
+      },
+      {
+        id: 'act-4',
+        type: 'benefits',
+        action: 'Benefits enrollment updated - 12 changes',
+        time: 'Yesterday',
+        status: 'completed',
+      },
+      {
+        id: 'act-5',
+        type: 'compliance',
+        action: 'Q4 tax filings submitted',
+        time: '2 days ago',
+        status: 'completed',
+      },
+    ],
+  }
+}
+
 export async function GET() {
   try {
     const supabase = await createClient()
@@ -31,24 +149,8 @@ export async function GET() {
       .single()
 
     if (membershipError || !membership) {
-      // Return demo data if no membership found
-      return NextResponse.json({
-        user: {
-          id: user.id,
-          email: user.email,
-          name: user.user_metadata?.full_name || 'User',
-        },
-        company: null,
-        stats: {
-          totalEmployees: 0,
-          nextPayrollAmount: 0,
-          pendingPtoRequests: 0,
-          avgHoursPerWeek: 0,
-        },
-        recentActivity: [],
-        pendingApprovals: [],
-        upcomingPayroll: null,
-      })
+      // Return rich demo data if no membership found
+      return NextResponse.json(getDemoData(user))
     }
 
     const companyId = membership.company_id
@@ -138,7 +240,29 @@ export async function GET() {
       }
     })
 
-    // Format response
+    // If no real data found, return demo data for a full dashboard
+    const hasRealData = (employeeCountResult.count && employeeCountResult.count > 0) || lastPayroll
+
+    if (!hasRealData) {
+      // Return demo data merged with real user info
+      const demoData = getDemoData(user)
+      return NextResponse.json({
+        ...demoData,
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.user_metadata?.full_name || demoData.user.name,
+        },
+        company: membership.companies || demoData.company,
+        membership: {
+          role: membership.role || demoData.membership.role,
+          department: membership.department || demoData.membership.department,
+          jobTitle: membership.job_title || demoData.membership.jobTitle,
+        },
+      })
+    }
+
+    // Format response with real data
     const response = {
       user: {
         id: user.id,
