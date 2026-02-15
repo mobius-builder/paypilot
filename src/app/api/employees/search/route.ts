@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getAuthContext } from '@/lib/api-auth'
+import { searchDemoEmployees } from '@/lib/demo-context'
 
 export async function GET(request: NextRequest) {
   try {
@@ -18,6 +19,12 @@ export async function GET(request: NextRequest) {
 
     if (!auth) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Use static data in demo mode
+    if (auth.isDemo) {
+      const demoResults = searchDemoEmployees(query, limit)
+      return NextResponse.json({ employees: demoResults })
     }
 
     const supabase = await createClient()

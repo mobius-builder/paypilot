@@ -1,4 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
+import { cookies } from 'next/headers'
+import { DEMO_CONTEXT, SARAH_CONTEXT, getDemoContextByEmail, isAdminRole } from '@/lib/demo-context'
 
 export interface AuthContext {
   userId: string
@@ -7,19 +9,55 @@ export interface AuthContext {
   isAdmin: boolean // True for owner, admin, hr_manager
   fullName?: string
   email?: string
+  isDemo?: boolean
 }
 
 // Admin roles that can manage agents
 const ADMIN_ROLES = ['owner', 'admin', 'hr_manager']
 
 /**
+ * Get demo context from cookies (server-side)
+ */
+async function getDemoContextFromCookies(): Promise<AuthContext | null> {
+  try {
+    const cookieStore = await cookies()
+    const demoMode = cookieStore.get('paypilot_demo_mode')?.value
+    const demoEmail = cookieStore.get('paypilot_demo_email')?.value
+
+    if (demoMode === 'true' && demoEmail) {
+      const demoContext = getDemoContextByEmail(decodeURIComponent(demoEmail))
+      if (demoContext) {
+        return {
+          userId: demoContext.userId,
+          companyId: demoContext.companyId,
+          role: demoContext.role,
+          isAdmin: demoContext.isAdmin,
+          fullName: demoContext.fullName,
+          email: demoContext.email,
+          isDemo: true,
+        }
+      }
+    }
+    return null
+  } catch {
+    return null
+  }
+}
+
+/**
  * Get authentication context for API routes.
- * Uses real Supabase auth - no demo mode fallback.
+ * Checks for demo mode first, then falls back to real Supabase auth.
  *
  * Returns null if not authenticated.
  */
 export async function getAuthContext(): Promise<AuthContext | null> {
   try {
+    // Check for demo mode first
+    const demoContext = await getDemoContextFromCookies()
+    if (demoContext) {
+      return demoContext
+    }
+
     const supabase = await createClient()
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 
@@ -63,6 +101,7 @@ export async function getAuthContext(): Promise<AuthContext | null> {
       isAdmin: ADMIN_ROLES.includes(membership.role),
       email: user.email,
       fullName: profile?.full_name,
+      isDemo: false,
     }
   } catch (error) {
     console.error('[Auth] Error getting auth context:', error)

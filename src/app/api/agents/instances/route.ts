@@ -2,52 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { CreateAgentInstanceRequest } from '@/lib/agents/types'
 import { getAuthContext, hasRole } from '@/lib/api-auth'
-
-// Demo agent instances for when in demo mode
-const DEMO_INSTANCES = [
-  {
-    id: '00000000-0000-0000-0000-000000000100',
-    name: 'Weekly Team Pulse',
-    status: 'active',
-    config: { tone_preset: 'poke_lite', audience_type: 'company_wide', target_employee_ids: [] },
-    created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-    agents: {
-      id: '00000000-0000-0000-0000-000000000001',
-      name: 'Pulse Check',
-      slug: 'pulse_check',
-      description: 'Weekly check-in to gauge team morale and workload',
-      agent_type: 'pulse_check',
-    },
-    agent_schedules: [
-      {
-        cadence: 'weekly',
-        next_run_at: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
-      },
-    ],
-    stats: { conversations: 23, messages: 156 },
-  },
-  {
-    id: '00000000-0000-0000-0000-000000000101',
-    name: 'New Hire Onboarding',
-    status: 'active',
-    config: { tone_preset: 'friendly_peer', audience_type: 'team', target_employee_ids: [] },
-    created_at: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
-    agents: {
-      id: '00000000-0000-0000-0000-000000000002',
-      name: 'Onboarding Buddy',
-      slug: 'onboarding',
-      description: 'Guide new hires through their first weeks',
-      agent_type: 'onboarding',
-    },
-    agent_schedules: [
-      {
-        cadence: 'daily',
-        next_run_at: new Date(Date.now() + 12 * 60 * 60 * 1000).toISOString(),
-      },
-    ],
-    stats: { conversations: 8, messages: 45 },
-  },
-]
+import { STATIC_AGENT_INSTANCES, AGENT_TEMPLATES, getAgentAnalytics } from '@/lib/agent-demo-data'
 
 // GET /api/agents/instances - List agent instances for company
 export async function GET() {
@@ -56,6 +11,46 @@ export async function GET() {
 
     if (!auth) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Return static data in demo mode
+    if (auth.isDemo) {
+      // Map static instances to expected format
+      const instances = STATIC_AGENT_INSTANCES.map(inst => {
+        const template = AGENT_TEMPLATES.find(t => t.id === inst.agent_id)
+        const analytics = getAgentAnalytics(inst.id)
+
+        return {
+          id: inst.id,
+          name: inst.name,
+          status: inst.status,
+          config: {
+            tone_preset: inst.tone,
+            audience_type: inst.audience_type,
+            ...inst.config,
+          },
+          created_at: inst.created_at,
+          agents: template ? {
+            id: template.id,
+            name: template.name,
+            slug: template.slug,
+            description: template.description,
+            agent_type: template.agent_type,
+          } : null,
+          agent_schedules: inst.last_run_at ? [
+            {
+              cadence: 'weekly',
+              next_run_at: new Date(new Date(inst.last_run_at).getTime() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+            },
+          ] : [],
+          stats: {
+            conversations: analytics.totalConversations,
+            messages: inst.conversations_count * 3, // Approximate
+          },
+        }
+      })
+
+      return NextResponse.json({ instances })
     }
 
     const supabase = await createClient()

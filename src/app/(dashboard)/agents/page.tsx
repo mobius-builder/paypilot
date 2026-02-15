@@ -61,6 +61,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
 import { toast } from 'sonner'
+import { useUser } from '@/contexts/user-context'
 
 interface Agent {
   id: string
@@ -144,27 +145,15 @@ function useDebounce<T>(value: T, delay: number): T {
   return debouncedValue
 }
 
-interface UserContext {
-  userId: string
-  role: string
-  isAdmin: boolean
-  isDemo: boolean
-  fullName?: string
-  email?: string
-}
-
 export default function AgentsPage() {
+  const { user, isAdmin, isLoading: isUserLoading } = useUser()
   const [instances, setInstances] = useState<AgentInstance[]>([])
   const [agents, setAgents] = useState<Agent[]>([])
   const [tonePresets, setTonePresets] = useState<TonePreset[]>([])
-  const [userContext, setUserContext] = useState<UserContext | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
   const [hasShownMembershipError, setHasShownMembershipError] = useState(false)
-
-  // Check if user is admin (can create/run agents)
-  const isAdmin = userContext?.isAdmin ?? false
 
   // Form state
   const [selectedAgentId, setSelectedAgentId] = useState('')
@@ -204,13 +193,6 @@ export default function AgentsPage() {
   const fetchData = async () => {
     setIsLoading(true)
     try {
-      // Fetch user context first to determine permissions
-      const userRes = await fetch('/api/auth/me')
-      if (userRes.ok) {
-        const userData = await userRes.json()
-        setUserContext(userData)
-      }
-
       const [instancesRes, agentsRes] = await Promise.all([
         fetch('/api/agents/instances'),
         fetch('/api/agents'),
@@ -430,7 +412,7 @@ export default function AgentsPage() {
             Create Agent
           </Button>
         )}
-        {!isAdmin && userContext && (
+        {!isAdmin && user && (
           <Badge variant="outline" className="text-muted-foreground">
             View Only
           </Badge>
