@@ -49,6 +49,7 @@ import {
   LayoutGrid,
 } from 'lucide-react'
 import { PayPilotLogo } from '@/components/logo'
+import { KeyboardShortcutsDialog } from '@/components/keyboard-shortcuts'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 
@@ -423,6 +424,9 @@ export default function DashboardLayout({
           </CommandGroup>
         </CommandList>
       </CommandDialog>
+
+      {/* Keyboard shortcuts help dialog */}
+      <KeyboardShortcutsDialog />
     </div>
   )
 }
