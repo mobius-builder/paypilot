@@ -51,6 +51,7 @@ import {
 import { PayPilotLogo } from '@/components/logo'
 import { KeyboardShortcutsDialog } from '@/components/keyboard-shortcuts'
 import { WhatsNewDialog } from '@/components/whats-new'
+import { DemoBanner } from '@/components/demo-banner'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 
@@ -177,8 +178,13 @@ export default function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Demo Mode Banner */}
+      <div className="fixed top-0 left-0 right-0 z-[60]">
+        <DemoBanner />
+      </div>
+
       {/* Desktop Sidebar */}
-      <aside className="fixed inset-y-0 left-0 z-50 w-56 bg-card border-r border-border hidden lg:block">
+      <aside className="fixed top-[40px] bottom-0 left-0 z-50 w-56 bg-card border-r border-border hidden lg:block">
         <div className="flex h-full flex-col">
           {/* Logo */}
           <div className="flex h-14 items-center gap-2 px-4 border-b border-border">
@@ -225,7 +231,7 @@ export default function DashboardLayout({
       </aside>
 
       {/* Mobile header */}
-      <header className="lg:hidden fixed top-0 left-0 right-0 z-50 h-14 bg-card border-b border-border flex items-center justify-between px-4">
+      <header className="lg:hidden fixed top-[40px] left-0 right-0 z-50 h-14 bg-card border-b border-border flex items-center justify-between px-4">
         <div className="flex items-center gap-2">
           <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
             <SheetTrigger asChild>
@@ -283,7 +289,7 @@ export default function DashboardLayout({
       </header>
 
       {/* Main content area */}
-      <div className="lg:pl-56">
+      <div className="lg:pl-56 pt-[40px]">
         {/* Desktop header */}
         <header className="hidden lg:flex h-14 items-center justify-between px-6 bg-card border-b border-border">
           <div>
@@ -382,7 +388,7 @@ export default function DashboardLayout({
         </header>
 
         {/* Page content */}
-        <main className="p-4 lg:p-6 mt-14 lg:mt-0">
+        <main className="p-4 lg:p-6 mt-[calc(40px+56px)] lg:mt-[40px]">
           {children}
         </main>
       </div>
