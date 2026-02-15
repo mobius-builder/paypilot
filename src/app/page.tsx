@@ -478,6 +478,75 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Testimonials Section */}
+      <section className="py-20 px-4 bg-white">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
+              Loved by HR teams everywhere
+            </h2>
+            <p className="text-xl text-slate-600 max-w-2xl mx-auto">
+              See what our customers have to say about PayPilot.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {[
+              {
+                quote: "PayPilot cut our payroll processing time by 75%. What used to take me all day now takes under an hour.",
+                author: "Sarah Chen",
+                role: "HR Director",
+                company: "TechFlow Inc.",
+                avatar: "SC"
+              },
+              {
+                quote: "The AI assistant is a game-changer. Employees stopped asking me basic questions because they get instant answers.",
+                author: "Marcus Johnson",
+                role: "People Operations",
+                company: "StartupXYZ",
+                avatar: "MJ"
+              },
+              {
+                quote: "Finally, an HR platform that doesn't feel like it was built in 2005. My team actually enjoys using it.",
+                author: "Emily Rodriguez",
+                role: "VP of HR",
+                company: "GrowthCo",
+                avatar: "ER"
+              }
+            ].map((testimonial, i) => (
+              <Card key={i} className="border-0 shadow-lg">
+                <CardContent className="p-6">
+                  <div className="flex gap-1 mb-4">
+                    {[1,2,3,4,5].map((star) => (
+                      <svg key={star} className="w-5 h-5 text-yellow-400 fill-current" viewBox="0 0 20 20">
+                        <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/>
+                      </svg>
+                    ))}
+                  </div>
+                  <p className="text-slate-700 mb-6">&quot;{testimonial.quote}&quot;</p>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-full flex items-center justify-center text-white font-medium text-sm">
+                      {testimonial.avatar}
+                    </div>
+                    <div>
+                      <p className="font-semibold text-slate-900">{testimonial.author}</p>
+                      <p className="text-sm text-slate-500">{testimonial.role}, {testimonial.company}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+          <div className="mt-12 flex justify-center items-center gap-8 text-slate-400">
+            <p className="text-sm">Trusted by teams at</p>
+            <div className="flex gap-8 items-center">
+              {['Acme Corp', 'TechFlow', 'StartupXYZ', 'GrowthCo', 'InnovateLabs'].map((company) => (
+                <span key={company} className="font-semibold text-slate-300">{company}</span>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Pricing Section */}
       <section id="pricing" className="py-20 px-4 bg-slate-50">
         <div className="max-w-7xl mx-auto">
