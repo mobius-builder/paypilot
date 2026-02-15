@@ -35,8 +35,11 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // Protected routes
-  const protectedRoutes = ['/dashboard', '/employees', '/payroll', '/time', '/benefits', '/settings', '/ai']
+  // Protected routes - DEMO MODE ENABLED
+  // Allow unauthenticated access to show demo data
+  // APIs return rich demo data when user is not authenticated
+  // This enables a full product demo without requiring login
+  const protectedRoutes = ['/settings'] // Only settings requires auth in demo mode
   const isProtectedRoute = protectedRoutes.some(route => request.nextUrl.pathname.startsWith(route))
 
   if (isProtectedRoute && !user) {
@@ -51,7 +54,14 @@ export async function updateSession(request: NextRequest) {
 
   if (isAuthRoute && user) {
     const url = request.nextUrl.clone()
-    url.pathname = '/dashboard'
+    url.pathname = '/overview'
+    return NextResponse.redirect(url)
+  }
+
+  // Redirect /dashboard to /overview (dashboard renamed to overview)
+  if (request.nextUrl.pathname === '/dashboard' || request.nextUrl.pathname.startsWith('/dashboard/')) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/overview'
     return NextResponse.redirect(url)
   }
 

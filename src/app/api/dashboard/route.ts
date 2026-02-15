@@ -1,15 +1,156 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
-// Rich demo data for when database is empty or unavailable
+// Helper to format relative time
+function formatRelativeTime(date: Date): string {
+  const now = new Date()
+  const diffMs = now.getTime() - date.getTime()
+  const diffMins = Math.floor(diffMs / 60000)
+  const diffHours = Math.floor(diffMs / 3600000)
+  const diffDays = Math.floor(diffMs / 86400000)
+
+  if (diffMins < 60) return `${diffMins} minutes ago`
+  if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`
+  if (diffDays === 1) return 'Yesterday'
+  if (diffDays < 7) return `${diffDays} days ago`
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+
+// Helper to format date range
+function formatDateRange(start: Date, end: Date): string {
+  const startStr = start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  const endStr = end.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  const days = Math.ceil((end.getTime() - start.getTime()) / 86400000) + 1
+  if (days === 1) return `${startStr} (1 day)`
+  return `${startStr} - ${endStr} (${days} days)`
+}
+
+// Dynamic demo data reflecting current org stats
 function getDemoData(user: { id: string; email?: string; user_metadata?: { full_name?: string } }) {
-  const nextPayDate = new Date()
-  nextPayDate.setDate(nextPayDate.getDate() + 5)
+  const now = new Date()
+
+  // Calculate next pay date (bi-weekly on Fridays)
+  const nextPayDate = new Date(now)
+  const daysUntilFriday = (5 - now.getDay() + 7) % 7 || 7
+  nextPayDate.setDate(now.getDate() + daysUntilFriday)
+  if (daysUntilFriday < 3) nextPayDate.setDate(nextPayDate.getDate() + 7) // At least 3 days out
+
+  // Current org metrics (realistic for a 47-person company)
+  const totalEmployees = 47
+  const avgSalary = 95000 // Annual
+  const biWeeklyGross = Math.round((totalEmployees * avgSalary) / 26)
+  const taxRate = 0.25
+  const deductionRate = 0.074 // Benefits ~7.4% of gross
+  const taxes = Math.round(biWeeklyGross * taxRate)
+  const deductions = Math.round(biWeeklyGross * deductionRate)
+  const netPay = biWeeklyGross - taxes - deductions
+
+  // Generate dynamic PTO requests based on current date
+  const ptoRequests = [
+    {
+      id: 'pto-001',
+      name: 'Sarah Chen',
+      type: 'PTO Request',
+      startDate: new Date(now.getTime() + 5 * 86400000),
+      endDate: new Date(now.getTime() + 7 * 86400000),
+      avatar: 'SC',
+      leaveType: 'vacation',
+    },
+    {
+      id: 'pto-002',
+      name: 'Marcus Johnson',
+      type: 'PTO Request',
+      startDate: new Date(now.getTime() + 10 * 86400000),
+      endDate: new Date(now.getTime() + 10 * 86400000),
+      avatar: 'MJ',
+      leaveType: 'personal',
+    },
+    {
+      id: 'pto-003',
+      name: 'Emily Rodriguez',
+      type: 'Sick Leave',
+      startDate: new Date(now.getTime() + 3 * 86400000),
+      endDate: new Date(now.getTime() + 4 * 86400000),
+      avatar: 'ER',
+      leaveType: 'sick',
+    },
+    {
+      id: 'pto-004',
+      name: 'David Kim',
+      type: 'PTO Request',
+      startDate: new Date(now.getTime() + 14 * 86400000),
+      endDate: new Date(now.getTime() + 18 * 86400000),
+      avatar: 'DK',
+      leaveType: 'vacation',
+    },
+    {
+      id: 'pto-005',
+      name: 'Rachel Wong',
+      type: 'PTO Request',
+      startDate: new Date(now.getTime() + 13 * 86400000),
+      endDate: new Date(now.getTime() + 13 * 86400000),
+      avatar: 'RW',
+      leaveType: 'personal',
+    },
+  ]
+
+  // Generate recent activity based on current time
+  const recentActivity = [
+    {
+      id: 'act-1',
+      type: 'employee',
+      action: 'New employee onboarded: James Wilson',
+      time: formatRelativeTime(new Date(now.getTime() - 2 * 3600000)),
+      status: 'completed',
+    },
+    {
+      id: 'act-2',
+      type: 'payroll',
+      action: `Payroll run completed - ${totalEmployees} employees paid`,
+      time: formatRelativeTime(new Date(now.getTime() - 5 * 3600000)),
+      status: 'completed',
+    },
+    {
+      id: 'act-3',
+      type: 'leave',
+      action: 'PTO approved for Lisa Park',
+      time: formatRelativeTime(new Date(now.getTime() - 26 * 3600000)),
+      status: 'completed',
+    },
+    {
+      id: 'act-4',
+      type: 'benefits',
+      action: 'Benefits enrollment updated - 12 changes',
+      time: formatRelativeTime(new Date(now.getTime() - 30 * 3600000)),
+      status: 'completed',
+    },
+    {
+      id: 'act-5',
+      type: 'compliance',
+      action: 'Q4 2025 tax filings submitted',
+      time: formatRelativeTime(new Date(now.getTime() - 72 * 3600000)),
+      status: 'completed',
+    },
+    {
+      id: 'act-6',
+      type: 'employee',
+      action: 'Performance review completed for Engineering team',
+      time: formatRelativeTime(new Date(now.getTime() - 96 * 3600000)),
+      status: 'completed',
+    },
+    {
+      id: 'act-7',
+      type: 'payroll',
+      action: 'Direct deposit setup completed for 3 new hires',
+      time: formatRelativeTime(new Date(now.getTime() - 120 * 3600000)),
+      status: 'completed',
+    },
+  ]
 
   return {
     user: {
       id: user.id,
-      email: user.email || 'demo@acme.com',
+      email: user.email || 'alex.chen@acme.com',
       name: user.user_metadata?.full_name || 'Alex Chen',
     },
     company: {
@@ -23,99 +164,43 @@ function getDemoData(user: { id: string; email?: string; user_metadata?: { full_
       jobTitle: 'HR Director',
     },
     stats: {
-      totalEmployees: 47,
-      nextPayrollAmount: 127450,
+      totalEmployees,
+      nextPayrollAmount: netPay,
       nextPayrollDate: nextPayDate.toISOString(),
-      pendingPtoRequests: 5,
+      pendingPtoRequests: ptoRequests.length,
       avgHoursPerWeek: 38.5,
+      // Extended stats
+      departmentCount: 8,
+      openPositions: 3,
+      ytdPayroll: netPay * 4, // ~2 months of payroll
+      retentionRate: 94.2,
     },
-    pendingApprovals: [
-      {
-        id: 'pto-001',
-        name: 'Sarah Chen',
-        type: 'PTO Request',
-        details: 'Feb 20-22 (3 days)',
-        avatar: 'SC',
-        leaveType: 'vacation',
-      },
-      {
-        id: 'pto-002',
-        name: 'Marcus Johnson',
-        type: 'PTO Request',
-        details: 'Feb 25 (1 day)',
-        avatar: 'MJ',
-        leaveType: 'personal',
-      },
-      {
-        id: 'pto-003',
-        name: 'Emily Rodriguez',
-        type: 'Sick Leave',
-        details: 'Feb 18-19 (2 days)',
-        avatar: 'ER',
-        leaveType: 'sick',
-      },
-      {
-        id: 'pto-004',
-        name: 'David Kim',
-        type: 'PTO Request',
-        details: 'Mar 1-5 (5 days)',
-        avatar: 'DK',
-        leaveType: 'vacation',
-      },
-      {
-        id: 'pto-005',
-        name: 'Rachel Wong',
-        type: 'PTO Request',
-        details: 'Feb 28 (1 day)',
-        avatar: 'RW',
-        leaveType: 'personal',
-      },
-    ],
+    pendingApprovals: ptoRequests.map(req => ({
+      id: req.id,
+      name: req.name,
+      type: req.type,
+      details: formatDateRange(req.startDate, req.endDate),
+      avatar: req.avatar,
+      leaveType: req.leaveType,
+    })),
     upcomingPayroll: {
       date: nextPayDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
-      employees: 47,
-      grossPay: 168500,
-      taxes: 42125,
-      deductions: 12450,
-      netPay: 113925,
+      employees: totalEmployees,
+      grossPay: biWeeklyGross,
+      taxes,
+      deductions,
+      netPay,
     },
-    recentActivity: [
-      {
-        id: 'act-1',
-        type: 'employee',
-        action: 'New employee onboarded: James Wilson',
-        time: '2 hours ago',
-        status: 'completed',
-      },
-      {
-        id: 'act-2',
-        type: 'payroll',
-        action: 'Payroll run completed - 47 employees paid',
-        time: '5 hours ago',
-        status: 'completed',
-      },
-      {
-        id: 'act-3',
-        type: 'leave',
-        action: 'PTO approved for Lisa Park',
-        time: 'Yesterday',
-        status: 'completed',
-      },
-      {
-        id: 'act-4',
-        type: 'benefits',
-        action: 'Benefits enrollment updated - 12 changes',
-        time: 'Yesterday',
-        status: 'completed',
-      },
-      {
-        id: 'act-5',
-        type: 'compliance',
-        action: 'Q4 tax filings submitted',
-        time: '2 days ago',
-        status: 'completed',
-      },
-    ],
+    recentActivity,
+    // Additional org insights
+    orgInsights: {
+      headcountTrend: '+3 this month',
+      avgTenure: '2.4 years',
+      upcomingAnniversaries: 4,
+      birthdaysThisWeek: 2,
+      onLeaveToday: 2,
+      remoteToday: 18,
+    },
   }
 }
 

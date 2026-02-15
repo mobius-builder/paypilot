@@ -30,7 +30,6 @@ import {
   CommandShortcut,
 } from '@/components/ui/command'
 import {
-  LayoutDashboard,
   Users,
   Calculator,
   Clock,
@@ -47,6 +46,7 @@ import {
   MessageCircle,
   Sparkles,
   ClipboardCheck,
+  LayoutGrid,
 } from 'lucide-react'
 import { PayPilotLogo } from '@/components/logo'
 import { createClient } from '@/lib/supabase/client'
@@ -60,7 +60,7 @@ const notifications = [
 ]
 
 const navigation = [
-  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { name: 'Overview', href: '/overview', icon: LayoutGrid },
   { name: 'Employees', href: '/employees', icon: Users },
   { name: 'Org Chart', href: '/org-chart', icon: Network },
   { name: 'Payroll', href: '/payroll', icon: Calculator },
@@ -394,7 +394,6 @@ export default function DashboardLayout({
               >
                 <item.icon className="mr-2 h-3.5 w-3.5" />
                 <span>{item.name}</span>
-                {item.name === 'Dashboard' && <CommandShortcut>⌘D</CommandShortcut>}
                 {item.name === 'Employees' && <CommandShortcut>⌘E</CommandShortcut>}
                 {item.name === 'Payroll' && <CommandShortcut>⌘P</CommandShortcut>}
               </CommandItem>

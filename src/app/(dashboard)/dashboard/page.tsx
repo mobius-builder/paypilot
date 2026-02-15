@@ -17,7 +17,13 @@ import {
   Sparkles,
   ArrowUpRight,
   CheckCircle2,
-  RefreshCw
+  RefreshCw,
+  Building2,
+  Briefcase,
+  Gift,
+  Home,
+  UserPlus,
+  Award
 } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
@@ -45,6 +51,10 @@ interface DashboardData {
     nextPayrollDate?: string
     pendingPtoRequests: number
     avgHoursPerWeek: number
+    departmentCount?: number
+    openPositions?: number
+    ytdPayroll?: number
+    retentionRate?: number
   }
   pendingApprovals: Array<{
     id: string
@@ -69,6 +79,14 @@ interface DashboardData {
     time: string
     status: string
   }>
+  orgInsights?: {
+    headcountTrend: string
+    avgTenure: string
+    upcomingAnniversaries: number
+    birthdaysThisWeek: number
+    onLeaveToday: number
+    remoteToday: number
+  }
 }
 
 function LoadingSkeleton() {
@@ -186,6 +204,8 @@ export default function DashboardPage() {
   const pendingApprovals = data?.pendingApprovals || []
   const upcomingPayroll = data?.upcomingPayroll
   const companyName = data?.company?.name || 'your company'
+  const orgInsights = data?.orgInsights
+  const recentActivity = data?.recentActivity || []
 
   // Build stats cards dynamically
   const statsCards = [
@@ -443,45 +463,102 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* Quick stats footer */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <Card className="p-4">
-          <div className="flex items-center gap-3">
-            <TrendingUp className="w-5 h-5 text-emerald-500" />
-            <div>
-              <p className="text-sm text-slate-500">Active Employees</p>
-              <p className="text-lg font-semibold text-slate-900">{stats.totalEmployees}</p>
+      {/* Organization Insights */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Organization at a Glance</CardTitle>
+          <CardDescription>Real-time workforce insights</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-4">
+            <div className="flex flex-col items-center p-3 bg-slate-50 rounded-lg">
+              <Users className="w-5 h-5 text-primary mb-2" />
+              <p className="text-xl font-bold text-slate-900">{stats.totalEmployees}</p>
+              <p className="text-xs text-slate-500 text-center">Employees</p>
+            </div>
+            <div className="flex flex-col items-center p-3 bg-slate-50 rounded-lg">
+              <Building2 className="w-5 h-5 text-violet-500 mb-2" />
+              <p className="text-xl font-bold text-slate-900">{stats.departmentCount || 8}</p>
+              <p className="text-xs text-slate-500 text-center">Departments</p>
+            </div>
+            <div className="flex flex-col items-center p-3 bg-slate-50 rounded-lg">
+              <Briefcase className="w-5 h-5 text-amber-500 mb-2" />
+              <p className="text-xl font-bold text-slate-900">{stats.openPositions || 3}</p>
+              <p className="text-xs text-slate-500 text-center">Open Roles</p>
+            </div>
+            <div className="flex flex-col items-center p-3 bg-emerald-50 rounded-lg">
+              <TrendingUp className="w-5 h-5 text-emerald-500 mb-2" />
+              <p className="text-xl font-bold text-emerald-700">{stats.retentionRate || 94}%</p>
+              <p className="text-xs text-slate-500 text-center">Retention</p>
+            </div>
+            <div className="flex flex-col items-center p-3 bg-slate-50 rounded-lg">
+              <Home className="w-5 h-5 text-blue-500 mb-2" />
+              <p className="text-xl font-bold text-slate-900">{orgInsights?.remoteToday || 18}</p>
+              <p className="text-xs text-slate-500 text-center">Remote Today</p>
+            </div>
+            <div className="flex flex-col items-center p-3 bg-slate-50 rounded-lg">
+              <Calendar className="w-5 h-5 text-red-400 mb-2" />
+              <p className="text-xl font-bold text-slate-900">{orgInsights?.onLeaveToday || 2}</p>
+              <p className="text-xs text-slate-500 text-center">On Leave</p>
+            </div>
+            <div className="flex flex-col items-center p-3 bg-slate-50 rounded-lg">
+              <Gift className="w-5 h-5 text-pink-500 mb-2" />
+              <p className="text-xl font-bold text-slate-900">{orgInsights?.birthdaysThisWeek || 2}</p>
+              <p className="text-xs text-slate-500 text-center">Birthdays</p>
+            </div>
+            <div className="flex flex-col items-center p-3 bg-slate-50 rounded-lg">
+              <Award className="w-5 h-5 text-amber-500 mb-2" />
+              <p className="text-xl font-bold text-slate-900">{orgInsights?.upcomingAnniversaries || 4}</p>
+              <p className="text-xs text-slate-500 text-center">Anniversaries</p>
             </div>
           </div>
-        </Card>
-        <Card className="p-4">
-          <div className="flex items-center gap-3">
-            <Users className="w-5 h-5 text-primary" />
-            <div>
-              <p className="text-sm text-slate-500">Departments</p>
-              <p className="text-lg font-semibold text-slate-900">5</p>
-            </div>
+          {/* Additional context row */}
+          <div className="mt-4 flex flex-wrap gap-3">
+            <Badge variant="outline" className="text-emerald-600 border-emerald-200 bg-emerald-50">
+              <UserPlus className="w-3 h-3 mr-1" />
+              {orgInsights?.headcountTrend || '+3 this month'}
+            </Badge>
+            <Badge variant="outline" className="text-blue-600 border-blue-200 bg-blue-50">
+              <Clock className="w-3 h-3 mr-1" />
+              Avg tenure: {orgInsights?.avgTenure || '2.4 years'}
+            </Badge>
+            <Badge variant="outline" className="text-violet-600 border-violet-200 bg-violet-50">
+              <Clock className="w-3 h-3 mr-1" />
+              {stats.avgHoursPerWeek}h avg/week
+            </Badge>
           </div>
-        </Card>
-        <Card className="p-4">
-          <div className="flex items-center gap-3">
-            <Clock className="w-5 h-5 text-violet-500" />
-            <div>
-              <p className="text-sm text-slate-500">Avg Hours/Week</p>
-              <p className="text-lg font-semibold text-slate-900">{stats.avgHoursPerWeek}h</p>
+        </CardContent>
+      </Card>
+
+      {/* Recent Activity */}
+      {recentActivity.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Recent Activity</CardTitle>
+            <CardDescription>Latest updates across your organization</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {recentActivity.slice(0, 5).map((activity) => (
+                <div key={activity.id} className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
+                  <div className={`w-2 h-2 rounded-full ${
+                    activity.type === 'employee' ? 'bg-primary' :
+                    activity.type === 'payroll' ? 'bg-emerald-500' :
+                    activity.type === 'leave' ? 'bg-violet-500' :
+                    activity.type === 'benefits' ? 'bg-amber-500' :
+                    'bg-slate-400'
+                  }`} />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-slate-900">{activity.action}</p>
+                    <p className="text-xs text-slate-500">{activity.time}</p>
+                  </div>
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                </div>
+              ))}
             </div>
-          </div>
+          </CardContent>
         </Card>
-        <Card className="p-4">
-          <div className="flex items-center gap-3">
-            <Calendar className="w-5 h-5 text-amber-500" />
-            <div>
-              <p className="text-sm text-slate-500">Pending PTO</p>
-              <p className="text-lg font-semibold text-slate-900">{stats.pendingPtoRequests}</p>
-            </div>
-          </div>
-        </Card>
-      </div>
+      )}
     </div>
   )
 }
