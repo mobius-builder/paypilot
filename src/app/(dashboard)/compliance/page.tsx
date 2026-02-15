@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import {
   Shield,
@@ -13,15 +13,17 @@ import {
   Download,
   ChevronRight,
   Bell,
-  XCircle,
   MoreVertical,
   Filter,
   Search,
   TrendingUp,
   Building2,
+  Loader2,
+  X,
+  RefreshCw,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Progress } from '@/components/ui/progress'
@@ -36,6 +38,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import {
@@ -46,11 +49,18 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog'
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 
-interface ComplianceItem {
+interface ComplianceTask {
   id: string
   title: string
   category: 'tax' | 'employment' | 'benefits' | 'safety' | 'reporting'
@@ -58,129 +68,56 @@ interface ComplianceItem {
   dueDate: string
   description: string
   assignee: string
+  assigneeTeam: string
   priority: 'low' | 'medium' | 'high' | 'critical'
   frequency: 'one-time' | 'monthly' | 'quarterly' | 'annual'
   completedDate?: string
   documents?: string[]
+  snoozedUntil?: string
 }
 
-const COMPLIANCE_ITEMS: ComplianceItem[] = [
-  {
-    id: '1',
-    title: 'Form 941 - Quarterly Federal Tax Return',
-    category: 'tax',
-    status: 'upcoming',
-    dueDate: '2026-04-30',
-    description: 'File quarterly federal tax return reporting wages paid to employees',
-    assignee: 'John Smith',
-    priority: 'high',
-    frequency: 'quarterly',
-  },
-  {
-    id: '2',
-    title: 'I-9 Employment Verification',
-    category: 'employment',
-    status: 'pending',
-    dueDate: '2026-02-18',
-    description: 'Complete I-9 forms for 3 new hires from January batch',
-    assignee: 'Sarah Chen',
-    priority: 'high',
-    frequency: 'one-time',
-  },
-  {
-    id: '3',
-    title: 'OSHA 300A Posting',
-    category: 'safety',
-    status: 'compliant',
-    dueDate: '2026-02-01',
-    description: 'Post OSHA Form 300A summary of work-related injuries',
-    assignee: 'Mike Johnson',
-    priority: 'medium',
-    frequency: 'annual',
-    completedDate: '2026-01-28',
-    documents: ['OSHA_300A_2025.pdf'],
-  },
-  {
-    id: '4',
-    title: 'W-2 Distribution',
-    category: 'tax',
-    status: 'compliant',
-    dueDate: '2026-01-31',
-    description: 'Distribute W-2 forms to all employees',
-    assignee: 'Payroll Team',
-    priority: 'critical',
-    frequency: 'annual',
-    completedDate: '2026-01-29',
-    documents: ['W2_batch_2025.pdf'],
-  },
-  {
-    id: '5',
-    title: '401(k) ADP/ACP Testing',
-    category: 'benefits',
-    status: 'pending',
-    dueDate: '2026-03-15',
-    description: 'Complete annual discrimination testing for 401(k) plan',
-    assignee: 'Benefits Admin',
-    priority: 'high',
-    frequency: 'annual',
-  },
-  {
-    id: '6',
-    title: 'State Unemployment Tax Filing',
-    category: 'tax',
-    status: 'overdue',
-    dueDate: '2026-02-10',
-    description: 'File quarterly state unemployment tax returns (CA, NY, TX)',
-    assignee: 'John Smith',
-    priority: 'critical',
-    frequency: 'quarterly',
-  },
-  {
-    id: '7',
-    title: 'EEO-1 Report',
-    category: 'reporting',
-    status: 'upcoming',
-    dueDate: '2026-05-31',
-    description: 'Submit annual EEO-1 Component 1 data collection',
-    assignee: 'HR Team',
-    priority: 'medium',
-    frequency: 'annual',
-  },
-  {
-    id: '8',
-    title: 'Benefits Enrollment Audit',
-    category: 'benefits',
-    status: 'compliant',
-    dueDate: '2026-01-15',
-    description: 'Verify all employee benefit elections are properly recorded',
-    assignee: 'Benefits Admin',
-    priority: 'medium',
-    frequency: 'annual',
-    completedDate: '2026-01-12',
-  },
-  {
-    id: '9',
-    title: 'Harassment Prevention Training',
-    category: 'employment',
-    status: 'pending',
-    dueDate: '2026-03-31',
-    description: 'Complete mandatory harassment prevention training for all CA employees',
-    assignee: 'HR Team',
-    priority: 'high',
-    frequency: 'annual',
-  },
-  {
-    id: '10',
-    title: 'Workers Comp Insurance Audit',
-    category: 'safety',
-    status: 'upcoming',
-    dueDate: '2026-04-15',
-    description: 'Complete annual workers compensation insurance audit',
-    assignee: 'Finance Team',
-    priority: 'medium',
-    frequency: 'annual',
-  },
-]
+interface TrainingStatus {
+  overview: {
+    totalEmployees: number
+    completedCount: number
+    inProgressCount: number
+    notStartedCount: number
+    completionRate: number
+    dueDate: string
+  }
+  courses: Array<{
+    id: string
+    name: string
+    required: boolean
+    duration: string
+    completedCount: number
+    totalRequired: number
+    dueDate: string | null
+  }>
+  byDepartment: Array<{
+    department: string
+    total: number
+    completed: number
+    completionRate: number
+  }>
+  pendingEmployees: Array<{
+    id: string
+    name: string
+    department: string
+    course: string
+    status: string
+    progress: number
+  }>
+}
+
+interface ScheduledAudit {
+  id: string
+  vendor: string
+  date: string
+  type: string
+  status: string
+  createdAt: string
+}
 
 const STATUS_CONFIG = {
   compliant: { color: 'bg-primary', badge: 'bg-accent text-primary', label: 'Compliant' },
@@ -205,50 +142,268 @@ const PRIORITY_CONFIG = {
 }
 
 export default function CompliancePage() {
-  const [items, setItems] = useState<ComplianceItem[]>(COMPLIANCE_ITEMS)
+  const [tasks, setTasks] = useState<ComplianceTask[]>([])
+  const [isLoading, setIsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [categoryFilter, setCategoryFilter] = useState<string>('all')
   const [statusFilter, setStatusFilter] = useState<string>('all')
-  const [selectedItem, setSelectedItem] = useState<ComplianceItem | null>(null)
 
-  const filteredItems = items.filter(item => {
-    const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.description.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesCategory = categoryFilter === 'all' || item.category === categoryFilter
-    const matchesStatus = statusFilter === 'all' || item.status === statusFilter
+  // Detail drawer state
+  const [selectedTask, setSelectedTask] = useState<ComplianceTask | null>(null)
+  const [isDetailOpen, setIsDetailOpen] = useState(false)
+
+  // Status change dialog
+  const [statusChangeTask, setStatusChangeTask] = useState<ComplianceTask | null>(null)
+
+  // Training status panel
+  const [isTrainingOpen, setIsTrainingOpen] = useState(false)
+  const [trainingStatus, setTrainingStatus] = useState<TrainingStatus | null>(null)
+  const [isLoadingTraining, setIsLoadingTraining] = useState(false)
+
+  // Audit schedule dialog
+  const [isAuditDialogOpen, setIsAuditDialogOpen] = useState(false)
+  const [auditVendor, setAuditVendor] = useState('')
+  const [auditDate, setAuditDate] = useState('')
+  const [isSchedulingAudit, setIsSchedulingAudit] = useState(false)
+  const [scheduledAudits, setScheduledAudits] = useState<ScheduledAudit[]>([])
+
+  // Action loading states
+  const [actionLoading, setActionLoading] = useState<string | null>(null)
+
+  // Fetch tasks on mount
+  useEffect(() => {
+    fetchTasks()
+  }, [])
+
+  const fetchTasks = async () => {
+    setIsLoading(true)
+    try {
+      const res = await fetch('/api/compliance/tasks')
+      if (res.ok) {
+        const data = await res.json()
+        setTasks(data.tasks)
+      } else {
+        toast.error('Failed to load compliance tasks')
+      }
+    } catch (error) {
+      console.error('Error fetching tasks:', error)
+      toast.error('Failed to load compliance tasks')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const filteredTasks = tasks.filter(task => {
+    const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      task.description.toLowerCase().includes(searchQuery.toLowerCase())
+    const matchesCategory = categoryFilter === 'all' || task.category === categoryFilter
+    const matchesStatus = statusFilter === 'all' || task.status === statusFilter
     return matchesSearch && matchesCategory && matchesStatus
   })
 
   const stats = {
-    total: items.length,
-    compliant: items.filter(i => i.status === 'compliant').length,
-    pending: items.filter(i => i.status === 'pending').length,
-    overdue: items.filter(i => i.status === 'overdue').length,
-    upcoming: items.filter(i => i.status === 'upcoming').length,
+    total: tasks.length,
+    compliant: tasks.filter(t => t.status === 'compliant').length,
+    pending: tasks.filter(t => t.status === 'pending').length,
+    overdue: tasks.filter(t => t.status === 'overdue').length,
+    upcoming: tasks.filter(t => t.status === 'upcoming').length,
   }
 
-  const complianceScore = Math.round((stats.compliant / stats.total) * 100)
+  const complianceScore = stats.total > 0 ? Math.round((stats.compliant / stats.total) * 100) : 0
 
-  const handleMarkComplete = (id: string) => {
-    setItems(prev => prev.map(item =>
-      item.id === id
-        ? { ...item, status: 'compliant' as const, completedDate: new Date().toISOString().split('T')[0] }
-        : item
-    ))
-    toast.success('Item marked as complete')
-    setSelectedItem(null)
-  }
+  // ========== API ACTIONS ==========
 
-  const handleSnooze = (id: string, days: number) => {
-    setItems(prev => prev.map(item => {
-      if (item.id === id) {
-        const newDate = new Date(item.dueDate)
-        newDate.setDate(newDate.getDate() + days)
-        return { ...item, dueDate: newDate.toISOString().split('T')[0], status: 'upcoming' as const }
+  const handleMarkComplete = async (taskId: string) => {
+    setActionLoading(taskId)
+    try {
+      const res = await fetch(`/api/compliance/tasks/${taskId}/complete`, {
+        method: 'POST',
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setTasks(prev => prev.map(t => t.id === taskId ? data.task : t))
+        toast.success('Task marked as complete')
+        setIsDetailOpen(false)
+        setSelectedTask(null)
+      } else {
+        toast.error('Failed to complete task')
       }
-      return item
-    }))
-    toast.success(`Deadline extended by ${days} days`)
+    } catch (error) {
+      console.error('Error completing task:', error)
+      toast.error('Failed to complete task')
+    } finally {
+      setActionLoading(null)
+    }
+  }
+
+  const handleSnooze = async (taskId: string, days: number) => {
+    setActionLoading(taskId)
+    try {
+      const res = await fetch(`/api/compliance/tasks/${taskId}/snooze`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ days }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setTasks(prev => prev.map(t => t.id === taskId ? data.task : t))
+        toast.success(data.message)
+      } else {
+        toast.error('Failed to snooze task')
+      }
+    } catch (error) {
+      console.error('Error snoozing task:', error)
+      toast.error('Failed to snooze task')
+    } finally {
+      setActionLoading(null)
+    }
+  }
+
+  const handleReassign = async (taskId: string, team: string) => {
+    setActionLoading(taskId)
+    try {
+      const res = await fetch(`/api/compliance/tasks/${taskId}/reassign`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ team }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setTasks(prev => prev.map(t => t.id === taskId ? data.task : t))
+        toast.success(data.message)
+      } else {
+        toast.error('Failed to reassign task')
+      }
+    } catch (error) {
+      console.error('Error reassigning task:', error)
+      toast.error('Failed to reassign task')
+    } finally {
+      setActionLoading(null)
+    }
+  }
+
+  const handleStatusChange = async (taskId: string, newStatus: string) => {
+    setActionLoading(taskId)
+    try {
+      const res = await fetch(`/api/compliance/tasks/${taskId}/status`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setTasks(prev => prev.map(t => t.id === taskId ? data.task : t))
+        toast.success(data.message)
+        setStatusChangeTask(null)
+      } else {
+        toast.error('Failed to update status')
+      }
+    } catch (error) {
+      console.error('Error updating status:', error)
+      toast.error('Failed to update status')
+    } finally {
+      setActionLoading(null)
+    }
+  }
+
+  const handleExportTask = async (taskId: string, format: 'json' | 'csv') => {
+    try {
+      const res = await fetch(`/api/compliance/tasks/${taskId}/export?format=${format}`)
+      if (res.ok) {
+        const blob = await res.blob()
+        const url = window.URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `compliance_task_${taskId}.${format}`
+        document.body.appendChild(a)
+        a.click()
+        window.URL.revokeObjectURL(url)
+        document.body.removeChild(a)
+        toast.success(`Task exported as ${format.toUpperCase()}`)
+      } else {
+        toast.error('Failed to export task')
+      }
+    } catch (error) {
+      console.error('Error exporting task:', error)
+      toast.error('Failed to export task')
+    }
+  }
+
+  const handleGenerateReport = async (format: 'pdf' | 'csv' | 'json') => {
+    try {
+      toast.loading('Generating report...')
+      const res = await fetch(`/api/compliance/report?format=${format}`)
+      if (res.ok) {
+        const blob = await res.blob()
+        const url = window.URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        const ext = format === 'pdf' ? 'txt' : format
+        a.download = `compliance_report_${new Date().toISOString().split('T')[0]}.${ext}`
+        document.body.appendChild(a)
+        a.click()
+        window.URL.revokeObjectURL(url)
+        document.body.removeChild(a)
+        toast.dismiss()
+        toast.success(`Report downloaded as ${format.toUpperCase()}`)
+      } else {
+        toast.dismiss()
+        toast.error('Failed to generate report')
+      }
+    } catch (error) {
+      console.error('Error generating report:', error)
+      toast.dismiss()
+      toast.error('Failed to generate report')
+    }
+  }
+
+  const handleLoadTrainingStatus = async () => {
+    setIsTrainingOpen(true)
+    setIsLoadingTraining(true)
+    try {
+      const res = await fetch('/api/compliance/training/status')
+      if (res.ok) {
+        const data = await res.json()
+        setTrainingStatus(data)
+      } else {
+        toast.error('Failed to load training status')
+      }
+    } catch (error) {
+      console.error('Error loading training status:', error)
+      toast.error('Failed to load training status')
+    } finally {
+      setIsLoadingTraining(false)
+    }
+  }
+
+  const handleScheduleAudit = async () => {
+    setIsSchedulingAudit(true)
+    try {
+      const res = await fetch('/api/compliance/audit/schedule', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          vendor: auditVendor || 'External Auditor',
+          date: auditDate || undefined,
+          type: 'Compliance Audit',
+        }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        toast.success(data.message)
+        setScheduledAudits(prev => [...prev, data.audit])
+        setIsAuditDialogOpen(false)
+        setAuditVendor('')
+        setAuditDate('')
+      } else {
+        toast.error('Failed to schedule audit')
+      }
+    } catch (error) {
+      console.error('Error scheduling audit:', error)
+      toast.error('Failed to schedule audit')
+    } finally {
+      setIsSchedulingAudit(false)
+    }
   }
 
   const formatDate = (date: string) => {
@@ -266,6 +421,14 @@ export default function CompliancePage() {
     return diff
   }
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -280,13 +443,30 @@ export default function CompliancePage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline">
-            <Download className="w-4 h-4 mr-2" />
-            Export Report
-          </Button>
-          <Button>
-            <Bell className="w-4 h-4 mr-2" />
-            Set Reminders
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">
+                <Download className="w-4 h-4 mr-2" />
+                Export Report
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => handleGenerateReport('json')}>
+                <FileText className="w-4 h-4 mr-2" />
+                Export as JSON
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleGenerateReport('csv')}>
+                <FileText className="w-4 h-4 mr-2" />
+                Export as CSV
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleGenerateReport('pdf')}>
+                <FileText className="w-4 h-4 mr-2" />
+                Export as PDF
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Button onClick={fetchTasks} variant="outline" size="icon">
+            <RefreshCw className="w-4 h-4" />
           </Button>
         </div>
       </div>
@@ -408,7 +588,7 @@ export default function CompliancePage() {
         </TabsList>
 
         <TabsContent value="list" className="space-y-4">
-          {filteredItems.length === 0 ? (
+          {filteredTasks.length === 0 ? (
             <Card>
               <CardContent className="py-12 text-center">
                 <Shield className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
@@ -419,13 +599,13 @@ export default function CompliancePage() {
               </CardContent>
             </Card>
           ) : (
-            filteredItems.map((item, index) => {
-              const CategoryIcon = CATEGORY_CONFIG[item.category].icon
-              const daysUntil = getDaysUntilDue(item.dueDate)
+            filteredTasks.map((task, index) => {
+              const CategoryIcon = CATEGORY_CONFIG[task.category].icon
+              const daysUntil = getDaysUntilDue(task.dueDate)
 
               return (
                 <motion.div
-                  key={item.id}
+                  key={task.id}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05 }}
@@ -433,30 +613,41 @@ export default function CompliancePage() {
                   <Card
                     className={cn(
                       "hover:shadow-md transition-shadow cursor-pointer",
-                      item.status === 'overdue' && "border-red-200 bg-red-50/50"
+                      task.status === 'overdue' && "border-red-200 bg-red-50/50"
                     )}
-                    onClick={() => setSelectedItem(item)}
+                    onClick={() => {
+                      setSelectedTask(task)
+                      setIsDetailOpen(true)
+                    }}
                   >
                     <CardContent className="p-4">
                       <div className="flex items-start gap-4">
                         <div className={cn(
                           "p-2 rounded-lg flex-shrink-0",
-                          CATEGORY_CONFIG[item.category].color
+                          CATEGORY_CONFIG[task.category].color
                         )}>
                           <CategoryIcon className="h-5 w-5" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between gap-2 mb-2">
                             <div>
-                              <h3 className="font-medium">{item.title}</h3>
+                              <h3 className="font-medium">{task.title}</h3>
                               <p className="text-sm text-muted-foreground line-clamp-1">
-                                {item.description}
+                                {task.description}
                               </p>
                             </div>
                             <div className="flex items-center gap-2 flex-shrink-0">
-                              <Badge className={STATUS_CONFIG[item.status].badge}>
-                                {STATUS_CONFIG[item.status].label}
+                              {/* Clickable Status Badge */}
+                              <Badge
+                                className={cn(STATUS_CONFIG[task.status].badge, "cursor-pointer hover:opacity-80")}
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setStatusChangeTask(task)
+                                }}
+                              >
+                                {STATUS_CONFIG[task.status].label}
                               </Badge>
+                              {/* Kebab Menu */}
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                                   <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -464,25 +655,77 @@ export default function CompliancePage() {
                                   </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
-                                  {item.status !== 'compliant' && (
-                                    <DropdownMenuItem onClick={(e) => {
-                                      e.stopPropagation()
-                                      handleMarkComplete(item.id)
-                                    }}>
+                                  {task.status !== 'compliant' && (
+                                    <DropdownMenuItem
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        handleMarkComplete(task.id)
+                                      }}
+                                      disabled={actionLoading === task.id}
+                                    >
                                       <CheckCircle2 className="h-4 w-4 mr-2" />
                                       Mark Complete
                                     </DropdownMenuItem>
                                   )}
-                                  <DropdownMenuItem onClick={(e) => {
-                                    e.stopPropagation()
-                                    handleSnooze(item.id, 7)
-                                  }}>
+                                  <DropdownMenuItem
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      handleSnooze(task.id, 7)
+                                    }}
+                                    disabled={actionLoading === task.id}
+                                  >
                                     <Clock className="h-4 w-4 mr-2" />
                                     Snooze 7 Days
                                   </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
-                                    <FileText className="h-4 w-4 mr-2" />
-                                    View Documents
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      handleReassign(task.id, 'HR')
+                                    }}
+                                    disabled={actionLoading === task.id}
+                                  >
+                                    <Users className="h-4 w-4 mr-2" />
+                                    Reassign to HR
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      handleReassign(task.id, 'Finance')
+                                    }}
+                                    disabled={actionLoading === task.id}
+                                  >
+                                    <Users className="h-4 w-4 mr-2" />
+                                    Reassign to Finance
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      handleReassign(task.id, 'Benefits')
+                                    }}
+                                    disabled={actionLoading === task.id}
+                                  >
+                                    <Users className="h-4 w-4 mr-2" />
+                                    Reassign to Benefits
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      handleExportTask(task.id, 'json')
+                                    }}
+                                  >
+                                    <Download className="h-4 w-4 mr-2" />
+                                    Export as JSON
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      handleExportTask(task.id, 'csv')
+                                    }}
+                                  >
+                                    <Download className="h-4 w-4 mr-2" />
+                                    Export as CSV
                                   </DropdownMenuItem>
                                 </DropdownMenuContent>
                               </DropdownMenu>
@@ -491,24 +734,24 @@ export default function CompliancePage() {
                           <div className="flex items-center flex-wrap gap-4 text-sm">
                             <div className="flex items-center gap-1 text-muted-foreground">
                               <Calendar className="h-4 w-4" />
-                              {item.status === 'compliant' ? (
-                                <span>Completed {formatDate(item.completedDate!)}</span>
+                              {task.status === 'compliant' ? (
+                                <span>Completed {formatDate(task.completedDate!)}</span>
                               ) : (
                                 <span className={cn(daysUntil < 0 && 'text-red-600 font-medium')}>
-                                  Due {formatDate(item.dueDate)}
+                                  Due {formatDate(task.dueDate)}
                                   {daysUntil < 0 && ` (${Math.abs(daysUntil)} days overdue)`}
                                   {daysUntil >= 0 && daysUntil <= 7 && ` (${daysUntil} days left)`}
                                 </span>
                               )}
                             </div>
-                            <Badge variant="secondary" className={PRIORITY_CONFIG[item.priority]}>
-                              {item.priority}
+                            <Badge variant="secondary" className={PRIORITY_CONFIG[task.priority]}>
+                              {task.priority}
                             </Badge>
                             <span className="text-muted-foreground capitalize">
-                              {item.frequency}
+                              {task.frequency}
                             </span>
                             <span className="text-muted-foreground">
-                              Assigned: {item.assignee}
+                              Assigned: {task.assignee}
                             </span>
                           </div>
                         </div>
@@ -537,7 +780,10 @@ export default function CompliancePage() {
 
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="hover:shadow-md transition-shadow cursor-pointer">
+        <Card
+          className="hover:shadow-md transition-shadow cursor-pointer"
+          onClick={() => handleGenerateReport('csv')}
+        >
           <CardContent className="p-6 flex items-center gap-4">
             <div className="p-3 rounded-lg bg-accent">
               <FileText className="h-6 w-6 text-primary" />
@@ -550,7 +796,10 @@ export default function CompliancePage() {
             </div>
           </CardContent>
         </Card>
-        <Card className="hover:shadow-md transition-shadow cursor-pointer">
+        <Card
+          className="hover:shadow-md transition-shadow cursor-pointer"
+          onClick={() => setIsAuditDialogOpen(true)}
+        >
           <CardContent className="p-6 flex items-center gap-4">
             <div className="p-3 rounded-lg bg-accent">
               <Building2 className="h-6 w-6 text-primary" />
@@ -563,7 +812,10 @@ export default function CompliancePage() {
             </div>
           </CardContent>
         </Card>
-        <Card className="hover:shadow-md transition-shadow cursor-pointer">
+        <Card
+          className="hover:shadow-md transition-shadow cursor-pointer"
+          onClick={handleLoadTrainingStatus}
+        >
           <CardContent className="p-6 flex items-center gap-4">
             <div className="p-3 rounded-lg bg-accent">
               <Users className="h-6 w-6 text-primary" />
@@ -578,57 +830,65 @@ export default function CompliancePage() {
         </Card>
       </div>
 
-      {/* Detail Dialog */}
-      <Dialog open={!!selectedItem} onOpenChange={() => setSelectedItem(null)}>
-        <DialogContent className="max-w-lg">
-          {selectedItem && (
+      {/* Task Detail Drawer */}
+      <Sheet open={isDetailOpen} onOpenChange={setIsDetailOpen}>
+        <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
+          {selectedTask && (
             <>
-              <DialogHeader>
+              <SheetHeader>
                 <div className="flex items-center gap-3 mb-2">
                   <div className={cn(
                     "p-2 rounded-lg",
-                    CATEGORY_CONFIG[selectedItem.category].color
+                    CATEGORY_CONFIG[selectedTask.category].color
                   )}>
                     {(() => {
-                      const Icon = CATEGORY_CONFIG[selectedItem.category].icon
+                      const Icon = CATEGORY_CONFIG[selectedTask.category].icon
                       return <Icon className="h-5 w-5" />
                     })()}
                   </div>
-                  <Badge className={STATUS_CONFIG[selectedItem.status].badge}>
-                    {STATUS_CONFIG[selectedItem.status].label}
+                  <Badge className={STATUS_CONFIG[selectedTask.status].badge}>
+                    {STATUS_CONFIG[selectedTask.status].label}
                   </Badge>
                 </div>
-                <DialogTitle>{selectedItem.title}</DialogTitle>
-                <DialogDescription>{selectedItem.description}</DialogDescription>
-              </DialogHeader>
+                <SheetTitle>{selectedTask.title}</SheetTitle>
+                <SheetDescription>{selectedTask.description}</SheetDescription>
+              </SheetHeader>
 
-              <div className="space-y-4 py-4">
+              <div className="space-y-6 py-6">
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
                     <p className="text-muted-foreground">Due Date</p>
-                    <p className="font-medium">{formatDate(selectedItem.dueDate)}</p>
+                    <p className="font-medium">{formatDate(selectedTask.dueDate)}</p>
                   </div>
                   <div>
                     <p className="text-muted-foreground">Priority</p>
-                    <Badge className={PRIORITY_CONFIG[selectedItem.priority]}>
-                      {selectedItem.priority}
+                    <Badge className={PRIORITY_CONFIG[selectedTask.priority]}>
+                      {selectedTask.priority}
                     </Badge>
                   </div>
                   <div>
                     <p className="text-muted-foreground">Frequency</p>
-                    <p className="font-medium capitalize">{selectedItem.frequency}</p>
+                    <p className="font-medium capitalize">{selectedTask.frequency}</p>
                   </div>
                   <div>
                     <p className="text-muted-foreground">Assigned To</p>
-                    <p className="font-medium">{selectedItem.assignee}</p>
+                    <p className="font-medium">{selectedTask.assignee}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Team</p>
+                    <p className="font-medium">{selectedTask.assigneeTeam}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Category</p>
+                    <p className="font-medium capitalize">{selectedTask.category}</p>
                   </div>
                 </div>
 
-                {selectedItem.documents && selectedItem.documents.length > 0 && (
+                {selectedTask.documents && selectedTask.documents.length > 0 && (
                   <div>
                     <p className="text-sm text-muted-foreground mb-2">Documents</p>
                     <div className="space-y-2">
-                      {selectedItem.documents.map((doc, i) => (
+                      {selectedTask.documents.map((doc, i) => (
                         <div key={i} className="flex items-center gap-2 p-2 bg-accent rounded">
                           <FileText className="h-4 w-4 text-muted-foreground" />
                           <span className="text-sm flex-1">{doc}</span>
@@ -641,27 +901,199 @@ export default function CompliancePage() {
                   </div>
                 )}
 
-                {selectedItem.completedDate && (
+                {selectedTask.completedDate && (
                   <div className="flex items-center gap-2 p-3 bg-green-50 rounded-lg text-green-700">
                     <CheckCircle2 className="h-5 w-5" />
-                    <span>Completed on {formatDate(selectedItem.completedDate)}</span>
+                    <span>Completed on {formatDate(selectedTask.completedDate)}</span>
                   </div>
                 )}
-              </div>
 
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setSelectedItem(null)}>
-                  Close
-                </Button>
-                {selectedItem.status !== 'compliant' && (
-                  <Button onClick={() => handleMarkComplete(selectedItem.id)}>
-                    <CheckCircle2 className="h-4 w-4 mr-2" />
-                    Mark Complete
+                <div className="flex gap-2">
+                  {selectedTask.status !== 'compliant' && (
+                    <Button
+                      onClick={() => handleMarkComplete(selectedTask.id)}
+                      disabled={actionLoading === selectedTask.id}
+                      className="flex-1"
+                    >
+                      {actionLoading === selectedTask.id ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <CheckCircle2 className="h-4 w-4 mr-2" />
+                      )}
+                      Mark Complete
+                    </Button>
+                  )}
+                  <Button
+                    variant="outline"
+                    onClick={() => handleExportTask(selectedTask.id, 'json')}
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Export
                   </Button>
-                )}
-              </DialogFooter>
+                </div>
+              </div>
             </>
           )}
+        </SheetContent>
+      </Sheet>
+
+      {/* Status Change Dialog */}
+      <Dialog open={!!statusChangeTask} onOpenChange={() => setStatusChangeTask(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Change Status</DialogTitle>
+            <DialogDescription>
+              Select a new status for this task
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-2 py-4">
+            {(['upcoming', 'pending', 'compliant', 'overdue'] as const).map((status) => (
+              <Button
+                key={status}
+                variant={statusChangeTask?.status === status ? 'default' : 'outline'}
+                className="justify-start"
+                onClick={() => statusChangeTask && handleStatusChange(statusChangeTask.id, status)}
+                disabled={actionLoading === statusChangeTask?.id}
+              >
+                {STATUS_CONFIG[status].label}
+              </Button>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Training Status Sheet */}
+      <Sheet open={isTrainingOpen} onOpenChange={setIsTrainingOpen}>
+        <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>Training Status</SheetTitle>
+            <SheetDescription>
+              Employee training completion across all required courses
+            </SheetDescription>
+          </SheetHeader>
+
+          {isLoadingTraining ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : trainingStatus ? (
+            <div className="space-y-6 py-6">
+              {/* Overview */}
+              <div className="p-4 bg-accent/50 rounded-lg">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <p className="text-2xl font-bold">{trainingStatus.overview.completionRate}%</p>
+                    <p className="text-sm text-muted-foreground">Overall Completion</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-medium">{trainingStatus.overview.completedCount}/{trainingStatus.overview.totalEmployees}</p>
+                    <p className="text-sm text-muted-foreground">Employees Complete</p>
+                  </div>
+                </div>
+                <Progress value={trainingStatus.overview.completionRate} className="h-3" />
+                <p className="text-xs text-muted-foreground mt-2">
+                  Due: {formatDate(trainingStatus.overview.dueDate)}
+                </p>
+              </div>
+
+              {/* By Department */}
+              <div>
+                <h4 className="font-medium mb-3">By Department</h4>
+                <div className="space-y-3">
+                  {trainingStatus.byDepartment.map((dept) => (
+                    <div key={dept.department}>
+                      <div className="flex justify-between text-sm mb-1">
+                        <span>{dept.department}</span>
+                        <span className="text-muted-foreground">
+                          {dept.completed}/{dept.total} ({dept.completionRate}%)
+                        </span>
+                      </div>
+                      <Progress value={dept.completionRate} className="h-2" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Pending Employees */}
+              <div>
+                <h4 className="font-medium mb-3">Pending Completion ({trainingStatus.pendingEmployees.length})</h4>
+                <div className="space-y-2 max-h-60 overflow-y-auto">
+                  {trainingStatus.pendingEmployees.map((emp) => (
+                    <div key={emp.id} className="flex items-center justify-between p-2 bg-accent/30 rounded">
+                      <div>
+                        <p className="font-medium text-sm">{emp.name}</p>
+                        <p className="text-xs text-muted-foreground">{emp.department}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Progress value={emp.progress} className="w-16 h-2" />
+                        <span className="text-xs text-muted-foreground w-8">{emp.progress}%</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ) : null}
+        </SheetContent>
+      </Sheet>
+
+      {/* Schedule Audit Dialog */}
+      <Dialog open={isAuditDialogOpen} onOpenChange={setIsAuditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Schedule Compliance Audit</DialogTitle>
+            <DialogDescription>
+              Schedule an external compliance audit with a vendor
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Vendor/Auditor</label>
+              <Input
+                placeholder="e.g., Deloitte, KPMG, Internal Audit"
+                value={auditVendor}
+                onChange={(e) => setAuditVendor(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Preferred Date</label>
+              <Input
+                type="date"
+                value={auditDate}
+                onChange={(e) => setAuditDate(e.target.value)}
+                min={new Date().toISOString().split('T')[0]}
+              />
+            </div>
+
+            {scheduledAudits.length > 0 && (
+              <div className="pt-4 border-t">
+                <h4 className="text-sm font-medium mb-2">Scheduled Audits</h4>
+                <div className="space-y-2">
+                  {scheduledAudits.map((audit) => (
+                    <div key={audit.id} className="flex items-center justify-between p-2 bg-accent rounded text-sm">
+                      <span>{audit.vendor}</span>
+                      <span className="text-muted-foreground">{formatDate(audit.date)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsAuditDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleScheduleAudit} disabled={isSchedulingAudit}>
+              {isSchedulingAudit ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Scheduling...
+                </>
+              ) : (
+                'Schedule Audit'
+              )}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

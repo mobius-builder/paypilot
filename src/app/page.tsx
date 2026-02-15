@@ -6,6 +6,7 @@ import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { PayPilotLogoFull } from '@/components/logo'
+import { OrchestrationAnimation } from '@/components/orchestration-animation'
 import {
   Users,
   Calculator,
@@ -379,6 +380,30 @@ export default function LandingPage() {
       {/* Dashboard Preview - Animated Mockup */}
       <section className="px-6 py-12 overflow-hidden">
         <DashboardMockup />
+      </section>
+
+      {/* Live Orchestration Animation - Technical Demo */}
+      <section className="px-6 py-16 bg-slate-50">
+        <div className="max-w-5xl mx-auto">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+            variants={staggerContainer}
+          >
+            <motion.div className="text-center mb-8" variants={fadeInUp}>
+              <h2 className="text-3xl font-bold text-foreground mb-3">
+                AI Agents Under the Hood
+              </h2>
+              <p className="text-muted-foreground max-w-xl mx-auto">
+                Watch our multi-agent orchestration engine in action. Real pipeline stages, real-time traces, production-grade execution.
+              </p>
+            </motion.div>
+            <motion.div variants={scaleIn}>
+              <OrchestrationAnimation autoStart={false} />
+            </motion.div>
+          </motion.div>
+        </div>
       </section>
 
       {/* Bento Grid Features Section */}

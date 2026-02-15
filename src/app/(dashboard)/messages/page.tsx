@@ -13,6 +13,7 @@ import {
   AlertCircle,
   Mic,
   Volume2,
+  Plus,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -22,6 +23,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { cn } from '@/lib/utils'
 import { useUser } from '@/contexts/user-context'
 import { VoiceInput, VoiceOutput } from '@/components/voice-input'
+import { NewConversationModal } from '@/components/new-conversation-modal'
 import { toast } from 'sonner'
 import {
   STATIC_CONVERSATIONS,
@@ -49,10 +51,13 @@ export default function MessagesPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [localMessages, setLocalMessages] = useState<Message[]>([])
   const [isListening, setIsListening] = useState(false)
+  const [isNewConversationOpen, setIsNewConversationOpen] = useState(false)
+  const [dynamicConversations, setDynamicConversations] = useState<Conversation[]>([])
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   // Get conversations based on user role (RBAC)
   // Admin sees ALL conversations, Employee sees ONLY their own
+  // Also includes dynamically created conversations
   const conversations = useMemo(() => {
     if (!user) return []
 
@@ -62,17 +67,31 @@ export default function MessagesPage() {
     // Get filtered conversations based on role
     const filteredConvs = getConversationsForUser(userId, userIsAdmin)
 
+    // Combine with dynamic conversations
+    const allConvs = [...filteredConvs, ...dynamicConversations]
+
     // Sort by last message date (most recent first)
-    return [...filteredConvs].sort((a, b) =>
+    return allConvs.sort((a, b) =>
       new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime()
     )
-  }, [user, isAdmin])
+  }, [user, isAdmin, dynamicConversations])
+
+  // Handle new conversation created
+  const handleConversationCreated = (conversation: Conversation) => {
+    setDynamicConversations(prev => [conversation, ...prev])
+    setSelectedConversationId(conversation.id)
+    setLocalMessages([...conversation.messages])
+  }
 
   // Get the selected conversation object
   const selectedConversation = useMemo(() => {
     if (!selectedConversationId || !user) return null
+    // Check dynamic conversations first
+    const dynamicConv = dynamicConversations.find(c => c.id === selectedConversationId)
+    if (dynamicConv) return dynamicConv
+    // Fall back to static conversations
     return getConversationById(selectedConversationId, user.userId, isAdmin)
-  }, [selectedConversationId, user, isAdmin])
+  }, [selectedConversationId, user, isAdmin, dynamicConversations])
 
   // Get agent instance for selected conversation
   const selectedAgentInstance = useMemo(() => {
@@ -176,7 +195,20 @@ export default function MessagesPage() {
           selectedConversationId && "hidden md:flex"
         )}>
           <div className="p-4 border-b">
-            <h2 className="font-semibold mb-3">Messages</h2>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="font-semibold">Messages</h2>
+              {isAdmin && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setIsNewConversationOpen(true)}
+                  className="gap-1"
+                >
+                  <Plus className="h-4 w-4" />
+                  New
+                </Button>
+              )}
+            </div>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -434,11 +466,29 @@ export default function MessagesPage() {
                 <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 <h3 className="font-medium mb-1">Select a conversation</h3>
                 <p className="text-sm">Choose from your messages on the left</p>
+                {isAdmin && (
+                  <Button
+                    className="mt-4 gap-2"
+                    onClick={() => setIsNewConversationOpen(true)}
+                  >
+                    <Plus className="h-4 w-4" />
+                    Start New Conversation
+                  </Button>
+                )}
               </div>
             </CardContent>
           )}
         </Card>
       </div>
+
+      {/* New Conversation Modal (Admin Only) */}
+      {isAdmin && (
+        <NewConversationModal
+          open={isNewConversationOpen}
+          onOpenChange={setIsNewConversationOpen}
+          onConversationCreated={handleConversationCreated}
+        />
+      )}
     </div>
   )
 }
